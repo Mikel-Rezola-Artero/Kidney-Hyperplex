@@ -94,7 +94,7 @@ Reduce(intersect, lapply(tonsil_intensity, colnames))
 #Markers for Cell Intensity: 
 #Complement: "C1q" "C3c" "C3d" "C5aR1" "C1r" "C1s" "C4d" "FH" "FB" "C9"
 #Immune Myeloid: "CD45" "CD68" "CD163" "CD11b" "MPO"
-#Immune Lympho: "CD20" "CD3" "CD8" "CD4" "IgG" 
+#Immune Lympho: "CD45" "CD20" "CD3" "CD8" "CD4" "IgG" 
 #Stroma: "CD31" "aSMA"
 #Cell State: "Ki67"
 
@@ -155,7 +155,7 @@ Reduce(intersect, lapply(tonsil_classification, colnames))
 #Markers for Cell Metadata: 
 #Complement: "C1q" "C3c" "C3d" "C5aR1" "C1r" "C1s" "C4d" "FH" "FB" "C9"
 #Immune Myeloid: "CD45" "CD68" "CD163" "CD11b" "MPO"
-#Immune Lympho: "CD20" "CD3" "CD8" "CD4" "IgG" 
+#Immune Lympho: "CD45" "CD20" "CD3" "CD8" "CD4" "IgG" 
 #Stroma: "CD31" "aSMA"
 #Cell State: "Ki67"
 
