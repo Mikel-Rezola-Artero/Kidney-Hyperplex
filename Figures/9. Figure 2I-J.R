@@ -15,7 +15,7 @@ library(ggrepel)
 setwd(dirname(getActiveDocumentContext()$path))
 data <- read_xlsx("LN_Bulgarie_DBfinal20250527.xlsx")
 
-#Are there any duplicated patients?
+#Are there any duplicated patients? (anonymised names)
 table(duplicated(data$Abrev.),duplicated(data$Name))
 #yes, 5 patients this is due to multiple visits we want visit 1
 
