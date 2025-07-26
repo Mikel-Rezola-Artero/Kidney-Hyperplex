@@ -8,10 +8,6 @@ library(ggplot2)
 library(patchwork)
 library(scales)
 
-# library(pROC)
-# library(RColorBrewer)
-# library(ggrepel)
-
 ####2. IMPORT & CLEAN DATA####
 
 #Load data from script directory
