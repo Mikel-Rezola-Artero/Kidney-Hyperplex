@@ -4,7 +4,7 @@ library(Seurat)
 library(ggplot2)
 library(scales)
 
-####2. LOAD GLOMERULI DATA####
+####2. LOAD ARTERY DATA####
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
