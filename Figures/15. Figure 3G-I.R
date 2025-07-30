@@ -140,7 +140,7 @@ testRes <- corr.test(mat,
                      normal=TRUE)
 
 #Calculate make all p-vals adjusted p-vals
-testRes <- as.matrix(forceSymmetric(testRes$p,uplo = "U")) > 0.05
+testRes <- as.matrix(forceSymmetric(testRes$p,uplo = "U"))
 for(i in 1:nrow(cor_matrix)){
   for(j in 1:nrow(cor_matrix)){
     if(testRes[i,j] > 0.05){
