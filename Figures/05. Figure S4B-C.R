@@ -103,7 +103,7 @@ qgraph(M1,
        color = c("purple","green","brown","red",
                  "lightblue","skyblue"),
        borders = T,
-       threshold = 0.45,#show only correlations above 0.4
+       threshold = 0.45,#show only correlations above 0.45
        label.cex = 1.2,
        labels = colnames(M1),
        graph = "cor",
