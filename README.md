@@ -1,5 +1,5 @@
 # Kidney-Hyperplex
-
+![Summary Analytical Pipeline](Summary_Pipeline.png)
 ## Project Overview
 
 Kidney-Hyperplex is a bioinformatics project focused on the analysis of kidney tissue using high-dimensional (hyperplexed) spatial data. 
