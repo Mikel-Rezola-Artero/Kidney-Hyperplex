@@ -1,5 +1,5 @@
 # Kidney-Hyperplex
-<img src="Summary_Pipeline.png" alt="Summary Analytical Pipeline" width="1000"/>
+<img src="Summary_Pipeline.png" alt="Summary Analytical Pipeline" width="600"/>
 
 ## Project Overview
 
