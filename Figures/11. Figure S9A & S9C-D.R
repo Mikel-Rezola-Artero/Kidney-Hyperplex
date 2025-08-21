@@ -14,7 +14,7 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only glomeruli/Processed_Glomeruli.rds"))
 
 
-####3. FIGURE S8A####
+####3. FIGURE S9A####
 
 #Extract data from Seurat object
 cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
@@ -69,14 +69,13 @@ ggplot(Immune_freq, aes(x = Disease, y = Frequency, fill = Disease)) +
     bracket.size = 0.5,
     hide.ns = TRUE
   ) +
-  
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         title = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5,face = "bold"),
         legend.position = "none")
 
 
-####4. FIGURE S8C####
+####4. FIGURE S9C####
 
 DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
         features = c("CD68.Pos", "CD163.Pos", "CD11b.Pos", "C5aR1.Pos",
@@ -91,10 +90,10 @@ DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
   guides(
     size = guide_legend(title = "Percentage Positive"),
     color = guide_colorbar(title = "Average Expression")
-  ) #FIGURE S8C
+  ) #FIGURE S9C
 
 
-####5. FIGURE S8D####
+####5. FIGURE S9D####
 
 #Obtain Lupus Immune cell data
 Lupus.Imm <- Seurat.obj[ , Seurat.obj$Disease == "LN" & 
@@ -165,7 +164,7 @@ ggplot(plot_df, aes(x = Marker1, y = Marker2)) +
                                hjust = 0.5, face = "bold"),
     axis.text.y = element_text(face = "bold",size = 10),
     plot.title = element_text(hjust = 0.5, face = "bold")
-  )#FIGURE S8D
+  )#FIGURE S9D
 
 
 ####6. Session Information#####
