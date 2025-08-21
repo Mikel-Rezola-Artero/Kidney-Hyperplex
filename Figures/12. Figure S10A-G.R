@@ -22,7 +22,7 @@ table(duplicated(data$Abrev.),duplicated(data$Name))
 data <- data[-c(2,12,17,19,34),]
 
 
-####3. FIGURE S9A-D####
+####3. FIGURE S10A-D####
 
 #Take glomeruli scoring information and rename columns
 df <- data[,c("C3c_parietal_Score",
@@ -254,11 +254,11 @@ eGFR.Plot <- ggplot(df_long, aes(x = factor(Score), y = eGFR, fill = Marker)) +
     plot.title = element_text(hjust = 0.5, face = "bold")
   ) + theme(legend.position = "none")
 
-#PLOT THE DATA (FIGURE S9A-D)
+#PLOT THE DATA (FIGURE S10A-D)
 (C3.Plot | C4.Plot) / (dsDNA.Plot | eGFR.Plot)
 
 
-####4. FIGURE S9E-G####
+####4. FIGURE S10E-G####
 
 # Variables to correlate with C5aR1 infiltrate
 variables <- c("C3", "C4", "dsDNA")
@@ -282,7 +282,7 @@ plots <- lapply(seq_along(variables), function(i) {
     )
 })
 
-#Arrange plots (FIGURE S9E-G)
+#Arrange plots (FIGURE S10E-G)
 ggarrange(plotlist = plots, ncol = 3, nrow = 1)
 
 
