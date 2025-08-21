@@ -11,14 +11,14 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Data/Processed_Tonsils.rds"))
 
 
-####3. FIGURE S2E ####
+####3. FIGURE S3E ####
 
 DimPlot(object = Seurat.obj,repel = T,
         label = T,label.box = T,label.size = 5,
         cols = c("red","gold","mediumseagreen","skyblue","purple","pink"),
         pt.size = 2,reduction = "umap") + NoLegend()
 
-####4. FIGURE S2F ####
+####4. FIGURE S3F ####
 
 FeaturePlot(object = Seurat.obj,
             pt.size = 1, repel = T,
@@ -28,7 +28,7 @@ FeaturePlot(object = Seurat.obj,
             min.cutoff = "q40",max.cutoff = "q99",
             ncol = 3)
 
-####5. FIGURE S2G ####
+####5. FIGURE S3G ####
 
 DotPlot(Seurat.obj,
         c("CD3",
