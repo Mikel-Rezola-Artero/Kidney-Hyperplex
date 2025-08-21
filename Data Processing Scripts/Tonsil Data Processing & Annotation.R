@@ -329,7 +329,7 @@ p1 <- DimPlot(object = Seurat_raw,group.by = "slide",
 p2 <- DimPlot(object = Seurat_mxnorm,group.by = "slide",
               label = T,label.box = T,label.size = 5,raster = T,
               repel = T, pt.size = 2, reduction = "umap")+ NoLegend()
-p1 | p2 #Figure S2C-D
+p1 | p2 #Figure S3C-D
 
 #Find Clusters in the batch corrected data
 Seurat_mxnorm <- FindNeighbors(Seurat_mxnorm,dims = 1:6) #Compute SNN graph for clustering
