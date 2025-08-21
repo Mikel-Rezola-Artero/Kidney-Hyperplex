@@ -66,20 +66,20 @@ Liver_filtered <- NormalizeData(Liver_filtered)
 #                                      "Liver Cells Processed.rds"))
 
 
-####3. FIGURE S14C####
+####3. FIGURE S1C####
 
 DimPlot(Liver_filtered, reduction = "umap",
-        group.by = "Cells",label = T,label.size = 4,repel = T) #FIGURE S14C
+        group.by = "Cells",label = T,label.size = 4,repel = T) #FIGURE S1C
 
 
-####4. FIGURE S14D####
+####4. FIGURE S1D####
 
 DotPlot(Liver_filtered,features =c("CD68","C1QA","C1QB","C1QC", "C5AR1","ITGAM",
                                    "CYP2E1","C1S","C1R","C3","C5","C6","C7","C9",
                                    "CFH","CFB"),
         dot.scale = 10,col.max = 1,group.by = "Cells") +
   scale_size(range = c(1, 8)) + RotatedAxis() + 
-  scale_color_gradientn(colors = c("white", "lightblue","blue"))# FIGURE S14C
+  scale_color_gradientn(colors = c("white", "lightblue","blue"))# FIGURE S1D
 
 
 ####5. Session Information#####
