@@ -13,7 +13,7 @@ setwd(dirname(getActiveDocumentContext()$path))
 Seurat.obj <- readRDS("Only skin/Processed_Skin.rds")
 
 
-####3. FIGURE S11B####
+####3. FIGURE S12B####
 
 #Plot clusters
 DimPlot(object = Seurat.obj,repel = T,
@@ -22,7 +22,7 @@ DimPlot(object = Seurat.obj,repel = T,
         pt.size = 1.5,reduction = "umap") + NoLegend()
 
 
-####4. FIGURE S11C####
+####4. FIGURE S12C####
 
 #Plot Markers for each cluster
 DotPlot(Seurat.obj,
