@@ -11,7 +11,7 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only glomeruli/Processed_Glomeruli.rds"))
 
 
-####3. FIGURE S6B####
+####3. FIGURE S7B####
 
 #Plot clusters
 DimPlot(object = Seurat.obj,repel = T,
@@ -26,7 +26,7 @@ DimPlot(object = Seurat.obj,repel = T,
 # Yes it did!!
 
 
-####4. FIGURE S6C####
+####4. FIGURE S7C####
 
 #Plot Markers for each cluster
 DotPlot(Seurat.obj,
