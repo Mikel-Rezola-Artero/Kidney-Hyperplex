@@ -14,7 +14,7 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only glomeruli/Processed_Glomeruli.rds"))
 
 
-####3. FIGURE S7A####
+####3. FIGURE S8A####
 
 #Show C deposits on for Endothelial Cells, Mesangial Cells & "PECs/PT-Conv" at Glomeruli level
 Endo.Mes.PECs <- Seurat.obj[ ,
