@@ -65,7 +65,7 @@ plot_data <- data.frame(UMAP1 = umap_coords[, 1],
                         UMAP2 = umap_coords[, 2], 
                         CellType = as.character(cell_types))
 
-####3. FIGURE S2H ####
+####3. FIGURE S3H ####
 
 #Modify the labels to fit the manuscript
 plot_data$CellType[plot_data$CellType == "PDC"] <-  "pDCs"
@@ -103,10 +103,10 @@ ggplot(plot_data[plot_data$CellType != "Pre-B cells" &
             col = "black",
             size = 4,
             vjust = -0.5,
-            hjust =0.75)# FIGURE S2H
+            hjust =0.75)# FIGURE S3H
 
 
-####4. FIGURE S2I ####
+####4. FIGURE S3I ####
 
 #Extract the counts from the sce object for the cells with labels 
 #and the genes of interest
@@ -128,13 +128,13 @@ Tonsil <- CreateSeuratObject(counts = counts.seurat,
 Tonsil@assays$RNA$data <- counts.seurat #add the normalized counts to the data slot
 Tonsil$Cells <- plot_data$CellType[plot_data$CellType != "Pre-B cells" & plot_data$CellType != "preTC"]
 
-#Do the DotPlot (FIGURE S2I)
+#Do the DotPlot (FIGURE S3I)
 DotPlot(Tonsil,features = c("C1QA","C1QB","C1QC","C5AR1",
                             "CD3E", "CD4","CD8A","MKI67",
                             "MS4A1","CD68","CD163"),
         dot.scale = 10,col.max = 1,group.by = "Cells") +
   scale_size(range = c(1, 8)) + RotatedAxis() + 
-  scale_color_gradientn(colors = c("white", "lightblue","blue"))# FIGURE S2I
+  scale_color_gradientn(colors = c("white", "lightblue","blue"))# FIGURE S3I
 
 ####5. Session Information#####
 
