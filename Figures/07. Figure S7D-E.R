@@ -162,7 +162,7 @@ sum(Glomeruli$`Cell type` == "Podocyte")#27 Podocytes (same as in original paper
 #Number of cells per cluster is almost identical to original papers (less than 2% difference per cluster)
 
 
-####4. FIGURE S6D####
+####4. FIGURE S7D####
 
 #Set new labels
 Idents(Glomeruli) <- "Cell type"
@@ -172,7 +172,7 @@ DimPlot(Glomeruli, reduction = "umap",
         label = TRUE, repel = TRUE) + NoLegend()
 
 
-####5. FIGURE S6E####
+####5. FIGURE S7E####
 
 #Plot Markers per cluster
 FeaturePlot(Glomeruli,
