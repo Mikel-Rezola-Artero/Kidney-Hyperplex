@@ -13,7 +13,7 @@ library(Seurat)
 
 #Set directory to script location & obtain files names
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "Data/", full.names = TRUE)
+files <- list.files(path = "../Data", full.names = TRUE)
 
 #Create list and import cell-segmented data from HALO Analysis
 Kidney_IF <- list()
@@ -21,11 +21,21 @@ Kidney_IF <- list()
 #Load DN data
 Kidney_IF$Diab1 <- read.csv2(grep("41_DNv2.csv",files, value = TRUE),
                              sep = ",", check.names = F)
-
 Kidney_IF$Diab2 <- read.csv2(grep("_DN.csv",files, value = TRUE)[2],
                              sep = ",", check.names = F)
-
 Kidney_IF$Diab3 <- read.csv2(grep("_DN.csv",files, value = TRUE)[3],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab4 <- read.csv2(grep("_DN.csv",files, value = TRUE)[4],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab5 <- read.csv2(grep("_DN.csv",files, value = TRUE)[5],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab6 <- read.csv2(grep("_DN.csv",files, value = TRUE)[6],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab7 <- read.csv2(grep("_DN.csv",files, value = TRUE)[7],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab8 <- read.csv2(grep("_DN.csv",files, value = TRUE)[8],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab9 <- read.csv2(grep("_DN.csv",files, value = TRUE)[9],
                              sep = ",", check.names = F)
 
 #Load CCE data
@@ -35,17 +45,36 @@ Kidney_IF$Chol1 <- read.csv2(grep("5_CCEv2.csv",files, value = TRUE),
 Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity'[is.na(Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity')] <- Kidney_IF[["Chol1"]]$`CD163-50 Cell Intensity`[Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity' == ""]
 Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`[is.na(Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`)] <- Kidney_IF[["Chol1"]]$`CD163-50 Positive Classification`[is.na(Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`)]
 Kidney_IF$Chol1 <- Kidney_IF$Chol1[1:131]#keep first 131 columns
-
 Kidney_IF$Chol2 <- read.csv2(grep("_CCEv3.csv",files, value = TRUE),
                              sep = ",", check.names = F)
-
-Kidney_IF$Chol3 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[3],
+Kidney_IF$Chol3 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[5],
                              sep = ",", check.names = F,
                              colClasses = c(rep(NA, 79),
                                             rep("NULL", 4),#remove columns 80-83
                                             rep(NA, 34),
                                             rep("NULL", 10)#remove columns 118-127
                              ))
+Kidney_IF$Chol4 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[1],
+                             sep = ",", check.names = F)
+Kidney_IF$Chol5 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[4],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+Kidney_IF$Chol6 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[6],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+names(Kidney_IF$Chol6)[108:111] <- c(
+  "Cell Area (µm²)",
+  "Cytoplasm Area (µm²)",
+  "Nucleus Area (µm²)",
+  "Nucleus Perimeter (µm)"
+)
+Kidney_IF$Chol7 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[7],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+Kidney_IF$Chol8 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[8],
+                             sep = ",", check.names = F)
+Kidney_IF$Chol9 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[9],
+                             sep = ",", check.names = F)
 
 #Load Lupus data
 Kidney_IF$Lupus1 <- read.csv2(grep("_Lupus.csv",files, value = TRUE)[1],
@@ -156,6 +185,23 @@ colnames(Diab2.Int)[c(25,17)] <- c("ITGA8","VCAM-1")
 colnames(Diab3.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab3.Int))
 colnames(Diab3.Int)[c(25,17)] <- c("ITGA8","VCAM-1")
 
+colnames(Diab4.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab4.Int))
+colnames(Diab4.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab5.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab5.Int))
+colnames(Diab5.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab6.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab6.Int))
+colnames(Diab6.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab7.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab7.Int))
+colnames(Diab7.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab8.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab8.Int))
+colnames(Diab8.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab9.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab9.Int))
+colnames(Diab9.Int)[c(14,22)] <- c("CD20","VCAM-1")
 
 #CCE
 colnames(Chol1.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol1.Int))
@@ -170,6 +216,23 @@ colnames(Chol3.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol3.Int))
 colnames(Chol3.Int) <- gsub("Rb", "", colnames(Chol3.Int))
 colnames(Chol3.Int)[c(15,17,14,18)] <- c("C9","Megalin","Synaptopodin","VCAM-1")
 
+colnames(Chol4.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol4.Int))
+colnames(Chol4.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol5.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol5.Int))
+colnames(Chol5.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol6.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol6.Int))
+colnames(Chol6.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol7.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol7.Int))
+colnames(Chol7.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol8.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol8.Int))
+colnames(Chol8.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol9.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol9.Int))
+colnames(Chol9.Int)[c(14,22)] <- c("CD20","VCAM-1")
 
 #Lupus
 colnames(Lupus1.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Lupus1.Int))
@@ -207,7 +270,7 @@ colnames(Lupus9.Int)[c(17,18,21,25,26,28,33)] <- c("Synaptopodin","ITGA8","VCAM-
 
 
 #Add the objects with corrected column names back to the intensities list
-for (i in 1:15) {
+for (i in 1:length(Glom_intensity)) {
   name <- names(Glom_intensity)[i]
   Glom_intensity[[name]] <- get(name)
   rm(list = name)
@@ -226,7 +289,7 @@ Reduce(intersect, lapply(Glom_intensity, colnames))
 
 ####5. PROCESS FLUORESCENCE INTENSITIES FOR MXNORM OBJECT CREATION####
 
-for (i in 1:15) {
+for (i in 1:length(Glom_intensity)) {
   int_name <- names(Glom_intensity)[i]
   orig_name <- names(Glom_IF)[i]
   
@@ -236,7 +299,6 @@ for (i in 1:15) {
   #Remove DAPI from Intensity Data
   Glom_intensity[[int_name]] <- Glom_intensity[[int_name]][, -1]
 }
-
 
 ####6. PROCESS SUPERVISED CLASSIFICATION DATA FOR MXNORM OBJECT CREATION####
 
@@ -251,7 +313,6 @@ names(Glom_classification) <- paste0(names(Glom_classification),".meta")
 #Assign each dataset to a variable
 list2env(Glom_classification, envir = .GlobalEnv)#Assign each dataset to a variable
 
-
 #Correct classification column names manually (no common patterns/spacers)
 
 #DN
@@ -265,6 +326,23 @@ colnames(Diab2.meta)[c(24,16)] <- c("ITGA8","VCAM-1")
 colnames(Diab3.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab3.meta))
 colnames(Diab3.meta)[c(24,16)] <- c("ITGA8","VCAM-1")
 
+colnames(Diab4.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab4.meta))
+colnames(Diab4.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab5.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab5.meta))
+colnames(Diab5.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab6.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab6.meta))
+colnames(Diab6.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab7.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab7.meta))
+colnames(Diab7.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab8.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab8.meta))
+colnames(Diab8.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab9.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab9.meta))
+colnames(Diab9.meta)[c(11,19)] <- c("CD20","VCAM-1")
 
 #CCE
 colnames(Chol1.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol1.meta))
@@ -279,6 +357,23 @@ colnames(Chol3.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol
 colnames(Chol3.meta) <- gsub("Rb", "", colnames(Chol3.meta))
 colnames(Chol3.meta)[c(15,17,14,19)] <- c("C9","Megalin","Synaptopodin","VCAM-1")
 
+colnames(Chol4.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol4.meta))
+colnames(Chol4.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol5.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol5.meta))
+colnames(Chol5.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol6.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol6.meta))
+colnames(Chol6.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol7.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol7.meta))
+colnames(Chol7.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol8.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol8.meta))
+colnames(Chol8.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol9.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol9.meta))
+colnames(Chol9.meta)[c(11,19)] <- c("CD20","VCAM-1")
 
 #Lupus
 colnames(Lupus1.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Lupus1.meta))
@@ -315,7 +410,7 @@ colnames(Lupus9.meta)[c(16,17,20,24,25,27,32)] <- c("Synaptopodin","ITGA8","VCAM
 
 
 #Add the objects with corrected column names back to the classification list
-for (i in 1:15) {
+for (i in 1:length(Glom_classification)) {
   name <- names(Glom_classification)[i]
   Glom_classification[[name]] <- get(name)
   rm(list = name)
@@ -457,7 +552,7 @@ ggplotly(plot_mx_discordance(mx_norm))#some markers are not completely corrected
 
 #Visualize the densities of the marker values normalized vs raw
 density_plot <- plot_mx_density(mx_norm)
-# ggsave(filename = file.path("Only glomeruli/", "density_plot_wide.png"),
+# ggsave(filename = file.path("../Plots", "density_plot_wide.png"),
 #        plot = density_plot,
 #        width = 35,  # Increase width to fit facets
 #        height = 6,
@@ -568,20 +663,22 @@ FeaturePlot(object = Seurat_mxnorm,raster = T,
             ))
 
 #Cluster 0 = Unknown
-#Cluster 1 = Endothelial
-#Cluster 2 = Mesangial
-#Cluster 3 = PECs/PT_VCAM1
-#Cluster 4 = Unknown
+#Cluster 1 = Mesangial 
+#Cluster 2 = Endothelial
+#Cluster 3 = Unknown
+#Cluster 4 = PECs/PT_VCAM1
 #Cluster 5 = Immune
 #Cluster 6 = Unknown
+#Cluster 7 = Unknown
 
 #Rename clusters according to Cell Markers
 new_cluster_names <- c("Unknown",
-                       "Endothelial",
                        "Mesangial",
-                       "PECs/PT_VCAM1",
+                       "Endothelial",
                        "Unknown",
+                       "PECs/PT_VCAM1",
                        "Immune",
+                       "Unknown",
                        "Unknown")
 
 names(new_cluster_names) <- levels(Seurat_mxnorm)
@@ -589,12 +686,12 @@ Seurat_mxnorm <- RenameIdents(Seurat_mxnorm,
                               new_cluster_names)
 
 #Store Processed Seurat Object with labels
-saveRDS(Seurat_mxnorm, file = paste0(dirname(getActiveDocumentContext()$path),
-                                     "/Only glomeruli/Processed_Glomeruli.rds"))
+saveRDS(Seurat_mxnorm, file = "../Data/Processed_Glomeruli_v2.rds")
+
 
 # If curious plot clusters as 3D
 # Seurat_mxnorm$clusters <- Idents(Seurat_mxnorm)
-# Seurat_mxnorm <- RunUMAP(Seurat_mxnorm, dims = 1:6, n.components = 2)
+# Seurat_mxnorm <- RunUMAP(Seurat_mxnorm, dims = 1:6, n.components = 3)
 # library(SCP)
 # CellDimPlot3D(srt = Seurat_mxnorm,
 #               group.by = "clusters")
@@ -609,13 +706,12 @@ sessionInfo()
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /home/mikel/miniconda3/envs/image-analysis-env/lib/libmkl_rt.so.2;  LAPACK version 3.10.1
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8       
-# [4] LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-# [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8   
+# [6] LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C            
+# [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
@@ -624,40 +720,33 @@ sessionInfo()
 #   [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] future_1.58.0      Seurat_5.3.0       SeuratObject_5.1.0 sp_2.2-0           plotly_4.10.4     
-# [6] mxnorm_1.0.3       reticulate_1.42.0  dplyr_1.1.4        ggplot2_3.5.2      rstudioapi_0.17.1 
+#   [1] future_1.58.0      Seurat_5.3.0       SeuratObject_5.1.0 sp_2.2-0           plotly_4.10.4      mxnorm_1.0.3       reticulate_1.42.0 
+# [8] readxl_1.4.5       rstudioapi_0.17.1  survminer_0.4.9    survival_3.8-3     ggraph_2.1.0       tidygraph_1.2.3    Matrix_1.6-5      
+# [15] psych_2.5.3        patchwork_1.3.0    ggpubr_0.6.0       dplyr_1.1.4        ggplot2_3.5.2      reshape2_1.4.4    
 # 
 # loaded via a namespace (and not attached):
-#   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3         spatstat.utils_3.1-4  
-# [5] SuppDists_1.1-9.9      farver_2.1.2           nloptr_2.2.1           vctrs_0.6.5           
-# [9] ROCR_1.0-11            spatstat.explore_3.4-3 minqa_1.2.8            htmltools_0.5.8.1     
-# [13] pROC_1.18.5            caret_7.0-1            sctransform_0.4.2      parallelly_1.45.0     
-# [17] KernSmooth_2.23-26     htmlwidgets_1.6.4      ica_1.0-3              plyr_1.8.9            
-# [21] zoo_1.8-12             lubridate_1.9.4        igraph_2.1.4           mime_0.13             
-# [25] lifecycle_1.0.4        iterators_1.0.14       pkgconfig_2.0.3        Matrix_1.6-5          
-# [29] R6_2.6.1               fastmap_1.2.0          rbibutils_2.3          fitdistrplus_1.1-11   
-# [33] shiny_1.10.0           digest_0.6.37          patchwork_1.3.0        tensor_1.5            
-# [37] RSpectra_0.16-1        irlba_2.3.5.1          crosstalk_1.2.1        labeling_0.4.3        
-# [41] progressr_0.15.1       spatstat.sparse_3.1-0  timechange_0.3.0       polyclip_1.10-7       
-# [45] abind_1.4-8            httr_1.4.7             compiler_4.3.2         proxy_0.4-27          
-# [49] withr_3.0.2            fastDummies_1.7.5      MASS_7.3-60            lava_1.8.1            
-# [53] rappdirs_0.3.3         ModelMetrics_1.2.2.2   tools_4.3.2            lmtest_0.9-40         
-# [57] httpuv_1.6.16          future.apply_1.11.0    goftest_1.2-3          nnet_7.3-19           
-# [61] glue_1.8.0             nlme_3.1-168           promises_1.3.3         grid_4.3.2            
-# [65] Rtsne_0.17             cluster_2.1.6          reshape2_1.4.4         generics_0.1.3        
-# [69] recipes_1.3.1          spatstat.data_3.1-6    gtable_0.3.6           class_7.3-22          
-# [73] tidyr_1.3.1            data.table_1.17.4      utf8_1.2.6             spatstat.geom_3.4-1   
-# [77] RcppAnnoy_0.0.22       ggrepel_0.9.6          RANN_2.6.1             foreach_1.5.2         
-# [81] pillar_1.10.2          stringr_1.5.1          spam_2.11-1            RcppHNSW_0.6.0        
-# [85] later_1.4.2            splines_4.3.2          lattice_0.22-7         deldir_1.0-9          
-# [89] survival_3.8-3         tidyselect_1.2.1       miniUI_0.1.1.1         pbapply_1.7-2         
-# [93] gridExtra_2.3          reformulas_0.4.1       scattermore_1.2        stats4_4.3.2          
-# [97] hardhat_1.4.1          timeDate_4041.110      matrixStats_1.5.0      stringi_1.8.7         
-# [101] lazyeval_0.2.2         yaml_2.3.10            boot_1.3-31            codetools_0.2-19      
-# [105] kSamples_1.2-10        tibble_3.2.1           cli_3.6.5              uwot_0.2.3            
-# [109] rpart_4.1.24           xtable_1.8-4           Rdpack_2.6.4           dichromat_2.0-0.1     
-# [113] Rcpp_1.0.14            spatstat.random_3.4-1  globals_0.18.0         png_0.1-8             
-# [117] spatstat.univar_3.1-3  parallel_4.3.2         gower_1.0.2            dotCall64_1.2         
-# [121] lme4_1.1-37            listenv_0.9.0          viridisLite_0.4.2      ipred_0.9-15          
-# [125] scales_1.4.0           prodlim_2025.04.28     e1071_1.7-13           ggridges_0.5.4        
-# [129] crayon_1.5.3           purrr_1.0.4            rlang_1.1.6            cowplot_1.1.3    
+#   [1] RcppAnnoy_0.0.22       splines_4.3.2          later_1.4.2            tibble_3.3.0           cellranger_1.1.0       polyclip_1.10-6       
+# [7] hardhat_1.4.1          pROC_1.18.5            rpart_4.1.24           fastDummies_1.7.5      lifecycle_1.0.4        Rdpack_2.6.4          
+# [13] rstatix_0.7.2          globals_0.18.0         lattice_0.22-7         MASS_7.3-60            crosstalk_1.2.1        backports_1.5.0       
+# [19] magrittr_2.0.3         yaml_2.3.10            httpuv_1.6.16          sctransform_0.4.2      spam_2.11-1            spatstat.sparse_3.1-0 
+# [25] cowplot_1.1.3          pbapply_1.7-2          minqa_1.2.8            RColorBrewer_1.1-3     lubridate_1.9.4        abind_1.4-8           
+# [31] Rtsne_0.17             purrr_1.0.4            nnet_7.3-19            tweenr_2.0.2           rappdirs_0.3.3         ipred_0.9-15          
+# [37] lava_1.8.1             KMsurv_0.1-5           ggrepel_0.9.4          irlba_2.3.5.1          listenv_0.9.0          spatstat.utils_3.1-4  
+# [43] goftest_1.2-3          RSpectra_0.16-1        spatstat.random_3.4-1  fitdistrplus_1.1-11    parallelly_1.45.0      codetools_0.2-19      
+# [49] ggforce_0.4.1          tidyselect_1.2.1       SuppDists_1.1-9.9      farver_2.1.2           lme4_1.1-37            viridis_0.6.4         
+# [55] stats4_4.3.2           matrixStats_1.5.0      spatstat.explore_3.4-3 jsonlite_2.0.0         caret_7.0-1            e1071_1.7-13          
+# [61] progressr_0.15.1       Formula_1.2-5          ggridges_0.5.4         iterators_1.0.14       systemfonts_1.2.3      foreach_1.5.2         
+# [67] tools_4.3.2            ragg_1.4.0             ica_1.0-3              Rcpp_1.0.11            glue_1.8.0             prodlim_2025.04.28    
+# [73] mnormt_2.1.1           gridExtra_2.3          xfun_0.41              kSamples_1.2-10        withr_3.0.2            fastmap_1.2.0         
+# [79] boot_1.3-31            digest_0.6.33          timechange_0.3.0       R6_2.6.1               mime_0.13              textshaping_1.0.1     
+# [85] scattermore_1.2        tensor_1.5             dichromat_2.0-0.1      spatstat.data_3.1-6    tidyr_1.3.1            generics_0.1.3        
+# [91] data.table_1.14.8      recipes_1.3.1          class_7.3-22           graphlayouts_1.0.2     httr_1.4.7             htmlwidgets_1.6.4     
+# [97] ModelMetrics_1.2.2.2   uwot_0.2.3             pkgconfig_2.0.3        gtable_0.3.6           timeDate_4041.110      lmtest_0.9-40         
+# [103] survMisc_0.5.6         htmltools_0.5.8.1      carData_3.0-5          dotCall64_1.2          scales_1.4.0           png_0.1-8             
+# [109] gower_1.0.2            spatstat.univar_3.1-3  reformulas_0.4.1       knitr_1.45             km.ci_0.5-6            nlme_3.1-168          
+# [115] nloptr_2.2.1           proxy_0.4-27           zoo_1.8-12             stringr_1.5.1          KernSmooth_2.23-26     parallel_4.3.2        
+# [121] miniUI_0.1.1.1         pillar_1.11.0          grid_4.3.2             vctrs_0.6.5            RANN_2.6.1             promises_1.3.3        
+# [127] car_3.1-3              xtable_1.8-4           cluster_2.1.6          cli_3.6.5              compiler_4.3.2         rlang_1.1.6           
+# [133] crayon_1.5.3           future.apply_1.11.0    ggsignif_0.6.4         labeling_0.4.3         plyr_1.8.9             stringi_1.8.1         
+# [139] viridisLite_0.4.2      deldir_1.0-9           lazyeval_0.2.2         spatstat.geom_3.4-1    RcppHNSW_0.6.0         shiny_1.10.0          
+# [145] rbibutils_2.3          ROCR_1.0-11            igraph_1.5.1           broom_1.0.8        

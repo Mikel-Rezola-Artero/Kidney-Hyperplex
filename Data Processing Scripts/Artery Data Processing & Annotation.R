@@ -13,7 +13,7 @@ library(Seurat)
 
 #Set directory to script location & obtain files names
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "Data2/", pattern = "\\.csv$", full.names = TRUE)
+files <- list.files(path = "../Data2/", pattern = "\\.csv$", full.names = TRUE)
 
 #Create list and import cell-segmented data from HALO Analysis
 Kidney_IF <- list()
@@ -23,27 +23,36 @@ Kidney_IF$Diab1 <- read.csv2(grep("_DN.csv",files, value = TRUE)[1],
                              sep = ",", check.names = F)
 #Remove badly annotated artery 7 from slide annotation
 Kidney_IF$Diab1$`Analysis Region`[Kidney_IF$Diab1$`Analysis Region` == "Artery 7"] <- NA
-
 Kidney_IF$Diab2 <- read.csv2(grep("_DN.csv",files, value = TRUE)[2],
                              sep = ",", check.names = F)
-
 Kidney_IF$Diab3 <- read.csv2(grep("_DN.csv",files, value = TRUE)[3],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab4 <- read.csv2(grep("_DN.csv",files, value = TRUE)[4],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab5 <- read.csv2(grep("_DN.csv",files, value = TRUE)[5],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab6 <- read.csv2(grep("_DN.csv",files, value = TRUE)[6],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab7 <- read.csv2(grep("_DN.csv",files, value = TRUE)[7],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab8 <- read.csv2(grep("_DN.csv",files, value = TRUE)[8],
+                             sep = ",", check.names = F)
+Kidney_IF$Diab9 <- read.csv2(grep("_DN.csv",files, value = TRUE)[9],
                              sep = ",", check.names = F)
 
 #Load CCE data
-Kidney_IF$Chol1 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[1],
+Kidney_IF$Chol1 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[2],
                              sep = ",", check.names = F)
 #Fix incomplete columns
 Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity'[Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity' == ""] <- Kidney_IF[["Chol1"]]$`CD163-50 Cell Intensity`[Kidney_IF[["Chol1"]]$'CD163-50 - TRITC Cell Intensity' == ""]
 Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`[is.na(Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`)] <- Kidney_IF[["Chol1"]]$`CD163-50 Positive Classification`[is.na(Kidney_IF[["Chol1"]]$`CD163-50 - TRITC Positive Classification`)]
 Kidney_IF$Chol1 <- Kidney_IF$Chol1[1:131]#keep first 131 columns
 
-#Use v3 version for Chol2 (contains artery annotations)
+#Use v2 version for Chol2 (contains artery annotations)
 Kidney_IF$Chol2 <- read.csv2(grep("9_CCEv2.csv",files, value = TRUE),
                              sep = ",", check.names = F,
                              colClasses = c(rep(NA, 115),rep("NULL", 22)))#keep first 115 columns
-
-Kidney_IF$Chol3 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[2],
+Kidney_IF$Chol3 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[4],
                              sep = ",", check.names = F,
                              colClasses = c(rep(NA, 79),
                                             rep("NULL", 4),#remove columns 80-83
@@ -52,6 +61,27 @@ Kidney_IF$Chol3 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[2],
                                             rep(NA, 4),#keep CD4 columns
                                             rep("NULL", 2)#remove columns 126-127
                              ))
+Kidney_IF$Chol4 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[1],
+                             sep = ",", check.names = F)
+Kidney_IF$Chol5 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[3],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+Kidney_IF$Chol6 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[5],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+names(Kidney_IF$Chol6)[108:111] <- c(
+  "Cell Area (µm²)",
+  "Cytoplasm Area (µm²)",
+  "Nucleus Area (µm²)",
+  "Nucleus Perimeter (µm)"
+)
+Kidney_IF$Chol7 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[6],
+                             sep = ";", check.names = F,
+                             fileEncoding = "latin1")
+Kidney_IF$Chol8 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[7],
+                             sep = ",", check.names = F)
+Kidney_IF$Chol9 <- read.csv2(grep("_CCE.csv",files, value = TRUE)[8],
+                             sep = ",", check.names = F)
 
 #Load Lupus data
 Kidney_IF$Lupus1 <- read.csv2(grep("_Lupus.csv",files, value = TRUE)[1],
@@ -151,6 +181,23 @@ colnames(Diab2.Int)[c(25,17)] <- c("ITGA8","VCAM-1")
 colnames(Diab3.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab3.Int))
 colnames(Diab3.Int)[c(25,17)] <- c("ITGA8","VCAM-1")
 
+colnames(Diab4.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab4.Int))
+colnames(Diab4.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab5.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab5.Int))
+colnames(Diab5.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab6.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab6.Int))
+colnames(Diab6.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab7.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab7.Int))
+colnames(Diab7.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab8.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab8.Int))
+colnames(Diab8.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Diab9.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Diab9.Int))
+colnames(Diab9.Int)[c(14,22)] <- c("CD20","VCAM-1")
 
 #CCE
 colnames(Chol1.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol1.Int))
@@ -165,6 +212,23 @@ colnames(Chol3.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol3.Int))
 colnames(Chol3.Int) <- gsub("Rb", "", colnames(Chol3.Int))
 colnames(Chol3.Int)[c(15,17,14,19)] <- c("C9","Megalin","Synaptopodin","VCAM-1")
 
+colnames(Chol4.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol4.Int))
+colnames(Chol4.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol5.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol5.Int))
+colnames(Chol5.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol6.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol6.Int))
+colnames(Chol6.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol7.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol7.Int))
+colnames(Chol7.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol8.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol8.Int))
+colnames(Chol8.Int)[c(14,22)] <- c("CD20","VCAM-1")
+
+colnames(Chol9.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Chol9.Int))
+colnames(Chol9.Int)[c(14,22)] <- c("CD20","VCAM-1")
 
 #Lupus
 colnames(Lupus1.Int) <- gsub("[-_ ].*Cell Intensity", "", colnames(Lupus1.Int))
@@ -200,9 +264,8 @@ colnames(Lupus9.Int) <- gsub("Cy", "", colnames(Lupus9.Int))
 colnames(Lupus9.Int)[c(17,18,21,25,26,28,33)] <- c("Synaptopodin","ITGA8","VCAM-1","MUM1","CD34","Megalin","IgM")
 
 
-
 #Add the objects with corrected column names back to the intensities list
-for (i in 1:15) {
+for (i in 1:length(Art_intensity)) {
   name <- names(Art_intensity)[i]
   Art_intensity[[name]] <- get(name)
   rm(list = name)
@@ -214,14 +277,14 @@ Reduce(intersect, lapply(Art_intensity, colnames))
 #Markers for Cell Intensity: 
 #Complement: "C1q" "C3c" "C3d" "C5aR1" "C1r" "C1s" "MBL" "C4d" "C9"
 #Immune Myeloid: "CD45" "CD68" "CD163" "CD11b" "MPO"
-#Immune Lympho: "CD45" "CD20" "CD3" "CD8"
+#Immune Lympho: "CD45" "CD20" "CD3"
 #Stroma: "CD31" "aSMA" "Megalin"
 #Cell State: "Ki67" "VCAM-1"
 
 
 ####5. PROCESS FLUORESCENCE INTENSITIES FOR MXNORM OBJECT CREATION####
 
-for (i in 1:15) {
+for (i in 1:length(Art_intensity)) {
   int_name <- names(Art_intensity)[i]
   orig_name <- names(Art_IF)[i]
   
@@ -260,6 +323,24 @@ colnames(Diab2.meta)[c(24,16)] <- c("ITGA8","VCAM-1")
 colnames(Diab3.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab3.meta))
 colnames(Diab3.meta)[c(24,16)] <- c("ITGA8","VCAM-1")
 
+colnames(Diab4.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab4.meta))
+colnames(Diab4.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab5.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab5.meta))
+colnames(Diab5.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab6.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab6.meta))
+colnames(Diab6.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab7.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab7.meta))
+colnames(Diab7.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab8.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab8.meta))
+colnames(Diab8.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Diab9.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Diab9.meta))
+colnames(Diab9.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
 
 #CCE
 colnames(Chol1.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol1.meta))
@@ -273,6 +354,24 @@ colnames(Chol2.meta)[c(15,17,20)] <- c("C9","Megalin","VCAM-1")
 colnames(Chol3.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol3.meta))
 colnames(Chol3.meta) <- gsub("Rb", "", colnames(Chol3.meta))
 colnames(Chol3.meta)[c(15,17,14,19)] <- c("C9","Megalin","Synaptopodin","VCAM-1")
+
+colnames(Chol4.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol4.meta))
+colnames(Chol4.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol5.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol5.meta))
+colnames(Chol5.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol6.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol6.meta))
+colnames(Chol6.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol7.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol7.meta))
+colnames(Chol7.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol8.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol8.meta))
+colnames(Chol8.meta)[c(11,19)] <- c("CD20","VCAM-1")
+
+colnames(Chol9.meta) <- gsub("[-_ ].*Positive Classification", "", colnames(Chol9.meta))
+colnames(Chol9.meta)[c(11,19)] <- c("CD20","VCAM-1")
 
 
 #Lupus
@@ -310,7 +409,7 @@ colnames(Lupus9.meta)[c(16,17,20,24,25,27,32)] <- c("Synaptopodin","ITGA8","VCAM
 
 
 #Add the objects with corrected column names back to the classification list
-for (i in 1:15) {
+for (i in 1:length(Art_classification)) {
   name <- names(Art_classification)[i]
   Art_classification[[name]] <- get(name)
   rm(list = name)
@@ -322,7 +421,7 @@ Reduce(intersect, lapply(Art_classification, colnames))
 #Markers for Cell Classification: 
 #Complement: "C1q" "MBL" "C3c" "C3d" "C5aR1" "C1r" "C1s" "C4d" "C9"
 #Immune Myeloid: "CD45" "CD68" "CD163" "CD11b" "MPO"
-#Immune Lympho: "CD45" "CD20" "CD3" "CD8" 
+#Immune Lympho: "CD45" "CD20" "CD3" 
 #Stroma: "CD31" "aSMA" "Megalin"
 #Cell State: "Ki67" "VCAM-1"
 
@@ -418,7 +517,7 @@ colnames(mx_sample) <- gsub("-","",colnames(mx_sample))
 mx_norm = mx_dataset(data=mx_sample,
                      slide_id="slide",
                      image_id="image",
-                     marker_cols=colnames(mx_sample)[1:22],
+                     marker_cols=colnames(mx_sample)[1:21],
                      metadata_cols=c(grep("Pos",colnames(mx_sample),value = TRUE),
                                      "Artery", "Disease")) 
 
@@ -450,7 +549,7 @@ ggplotly(plot_mx_discordance(mx_norm))#some markers are not completely corrected
 
 #Visualize the densities of the marker values normalized vs raw
 density_plot <- plot_mx_density(mx_norm)
-# ggsave(filename = file.path("Only arteries/", "density_plot_wide.png"),
+# ggsave(filename = file.path("../Plots", "density_plot_wide.png"),
 #        plot = density_plot,
 #        width = 35,  # Increase width to fit facets
 #        height = 6,
@@ -460,7 +559,7 @@ density_plot <- plot_mx_density(mx_norm)
 #Do UMAP & check how the batch correction integration did
 mx_norm = run_reduce_umap(mx_norm,
                           table="both",
-                          marker_list = colnames(mx_norm$norm_data)[c(15,18,19,20)],
+                          marker_list = colnames(mx_norm$norm_data)[c(9,15,18,19,20)],
                           downsample_pct = 0.2,
                           metadata_col = colnames(mx_norm$norm_data)[c(25:46)])
 
@@ -471,6 +570,7 @@ plot_mx_umap(mx_norm,metadata_col = "slide")
 plot_mx_umap(mx_norm,metadata_col = "CD31.Pos")
 plot_mx_umap(mx_norm,metadata_col = "CD45.Pos")
 plot_mx_umap(mx_norm,metadata_col = "aSMA.Pos")
+plot_mx_umap(mx_norm,metadata_col = "CD3.Pos")
 
 #We see good segregation of key markers, we can use batch corrected data for clustering
 
@@ -478,13 +578,13 @@ plot_mx_umap(mx_norm,metadata_col = "aSMA.Pos")
 ####9. CREATE SEURAT OBJECT AND IDENTIFY CELL TYPES#####
 
 #Batch corrected data
-seurat_int <- data.frame(mx_norm$norm_data[,c(3:24)])#extract batch corrected intensity data
+seurat_int <- data.frame(mx_norm$norm_data[,c(3:23)])#extract batch corrected intensity data
 seurat_int[is.na(seurat_int)]#check for missing data
 seurat_int$Nuc.size <- unlist(lapply(Art_IF, function(df) df[["Nucleus Area (µm²)"]]))#add nuclear size data
 
 #Create Seurat object for clustering
 Seurat_mxnorm <- CreateSeuratObject(counts = t(seurat_int),
-                                    meta.data = data.frame(cbind(Merged.Meta,mx_sample[c(47,48)]),
+                                    meta.data = data.frame(cbind(Merged.Meta,mx_sample[c(45,46)]),
                                                            row.names = rownames(seurat_int)))
 
 #Create "data" slot with the batch corrected/normalized values
@@ -557,14 +657,14 @@ FeaturePlot(object = Seurat_mxnorm,raster = T,
                          "CD3.Pos"#T cells
             ))
 
-#Cluster 0 is Vascular smooth muscle cells (vSMC)
-#Cluster 1 is Unknown
+#Cluster 0 is Unknown
+#Cluster 1 is Vascular smooth muscle cells (vSMC)
 #Cluster 2 is Endothelial
 #Cluster 3 is Immune cells
 
 #Rename clusters according to Cell Markers
-new_cluster_names <- c("vSMC",
-                       "Unknown",
+new_cluster_names <- c("Unknown",
+                       "vSMC",
                        "Endothelial",
                        "Immune")
 names(new_cluster_names) <- levels(Seurat_mxnorm)
@@ -572,8 +672,7 @@ Seurat_mxnorm <- RenameIdents(Seurat_mxnorm,
                               new_cluster_names)
 
 #Store Processed Seurat Object with labels
-saveRDS(Seurat_mxnorm, file = paste0(dirname(rstudioapi::getActiveDocumentContext()$path),
-                                     "/Only arteries/Processed_Artery.rds"))
+saveRDS(Seurat_mxnorm, file = "../Data2/Processed_Artery_v2.rds")
 
 # # If curious plot clusters as 3D
 # Seurat_mxnorm <- RunUMAP(Seurat_mxnorm, dims = 1:4, n.components = 3)

@@ -322,14 +322,14 @@ ElbowPlot(Seurat_raw) | ElbowPlot(Seurat_mxnorm) #we will use the 6 PCs
 Seurat_raw <- RunUMAP(Seurat_raw, dims = 1:6, n.components = 2)
 Seurat_mxnorm <- RunUMAP(Seurat_mxnorm, dims = 1:6, n.components = 2)
 
-#Check batch effect (Figure S2C-D)
+#Check batch effect (Figure S4C-D)
 p1 <- DimPlot(object = Seurat_raw,group.by = "slide",
               label = T,label.box = T,label.size = 5,raster = T,
               repel = T, pt.size = 2, reduction = "umap")+ NoLegend()
 p2 <- DimPlot(object = Seurat_mxnorm,group.by = "slide",
               label = T,label.box = T,label.size = 5,raster = T,
               repel = T, pt.size = 2, reduction = "umap")+ NoLegend()
-p1 | p2 #Figure S3C-D
+p1 | p2 #Figure S4C-D
 
 #Find Clusters in the batch corrected data
 Seurat_mxnorm <- FindNeighbors(Seurat_mxnorm,dims = 1:6) #Compute SNN graph for clustering
