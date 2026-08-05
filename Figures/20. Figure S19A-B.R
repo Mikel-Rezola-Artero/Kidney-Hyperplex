@@ -28,7 +28,7 @@ Skin$`Analysis Region` <- factor(Skin$`Analysis Region`,levels = c("Reticular De
 Seurat.obj$Arteries <- Skin$`Analysis Region`
 
 
-####3. FIGURE 6A####
+####3. FIGURE S19A####
 
 #Plot Immune sub-cluster immune frequencies by artery type
 
@@ -51,7 +51,7 @@ freq_df <- cluster_counts %>%
 mat <- freq_df[,2:4]
 rownames(mat) <- freq_df$Artery
 
-#Plot Heatmap (FIGURE 6A)
+#Plot Heatmap (FIGURE S19A)
 pheatmap(mat,
          cluster_rows = F,
          cluster_cols = F,
@@ -68,7 +68,7 @@ pheatmap(mat,
          angle_col = 315)
 
 
-####4. FIGURE 6B####
+####4. FIGURE S19B####
 
 #Plot Associations between immune cells in CCE skin arteries and C5aR1 and CD11b
 

@@ -8,20 +8,20 @@ library(scales)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only arteries/Processed_Artery.rds"))
+                             "/Only arteries/Processed_Artery_v2.rds"))
 
-####3. FIGURE S11B####
+####3. FIGURE S15B####
 
-#Plot annotated clusters as DimPlot (FIGURE S11B)
+#Plot annotated clusters as DimPlot (FIGURE S15B)
 DimPlot(object = Seurat.obj,repel = T,
         label = T,label.box = T,label.size = 5,
-        cols = c("gold","grey","red","violet"),
-        pt.size = 1.5,reduction = "umap") + NoLegend()
+        cols = c("grey","gold","red","violet"),
+        pt.size = 0.1,reduction = "umap") + NoLegend()
 
 
-####4. FIGURE S11C####
+####4. FIGURE S15C####
 
-#Check distribution of key cell markers as DotPlot (FIGURE S11C)
+#Check distribution of key cell markers as DotPlot (FIGURE S15C)
 DotPlot(Seurat.obj,
         c("aSMA",
           "CD31","VCAM1",

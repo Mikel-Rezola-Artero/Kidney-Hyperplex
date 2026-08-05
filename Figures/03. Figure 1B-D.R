@@ -20,7 +20,7 @@ names(tonsil_list) <- paste0("Tonsil",1:4)#Name list elements
 
 ####3. FIGURE 1B ####
 
-#Modify graphics to show 4 graphs at a time
+#Make list to contain all plots
 plot_list <- list()
 
 #Loop through all Tonsil slides

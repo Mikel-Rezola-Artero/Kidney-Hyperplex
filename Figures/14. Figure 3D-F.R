@@ -8,7 +8,7 @@ library(scales)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only arteries/Processed_Artery.rds"))
+                             "/Only arteries/Processed_Artery_v2.rds"))
 
 
 ####3. FIGURE 3D-F####
@@ -21,7 +21,7 @@ LN <- DotPlot(Seurat.obj[, Seurat.obj$Disease == "LN"],
   labs(title = "Complement Deposits in Lupus Nephritis") + 
   scale_color_gradient(low = "white", high = "blue", 
                        limits = c(0, 1), oob = squish) +
-  scale_size(limits = c(5, 100),range = c(0.1,25))  + 
+  scale_size(limits = c(10, 100),range = c(0.1,25))  + 
   theme(axis.title.y = element_blank(),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
@@ -37,7 +37,7 @@ DN <- DotPlot(Seurat.obj[, Seurat.obj$Disease == "Diabetes"],
   labs(title = "Complement Deposits in Diabetes Nephritis") + 
   scale_color_gradient(low = "white", high = "blue", 
                        limits = c(0, 1), oob = squish) +
-  scale_size(limits = c(5, 100),range = c(0.1,25))  + 
+  scale_size(limits = c(10, 100),range = c(0.1,25))  + 
   theme(axis.title.y = element_blank(),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
@@ -53,7 +53,7 @@ CCE <- DotPlot(Seurat.obj[, Seurat.obj$Disease == "CCE"],
   labs(title = "Complement Deposits in CCE") + 
   scale_color_gradient(low = "white", high = "blue", 
                        limits = c(0, 1), oob = squish) +
-  scale_size(limits = c(5, 100),range = c(0,25))  + 
+  scale_size(limits = c(10, 100),range = c(0,25))  + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.y = element_blank(),
         axis.title.x = element_blank(),

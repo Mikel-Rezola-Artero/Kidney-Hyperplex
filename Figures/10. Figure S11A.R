@@ -11,10 +11,10 @@ library(ggplot2)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only glomeruli/Processed_Glomeruli.rds"))
+                             "/Only glomeruli/Processed_Glomeruli_v2.rds"))
 
 
-####3. FIGURE S8A####
+####3. FIGURE S11A####
 
 #Show C deposits on for Endothelial Cells, Mesangial Cells & "PECs/PT-Conv" at Glomeruli level
 Endo.Mes.PECs <- Seurat.obj[ ,
@@ -62,23 +62,23 @@ compare_means(
   p.adjust.method = "bonferroni"
 )
 # # A tibble: 15 × 8
-#      Cells       Marker    .y.        p      p.adj  p.format p.signif    method        
-#      <fct>      <fct>     <chr>     <dbl>    <dbl>    <chr>  <chr>       <chr>         
-#   1 Endothelial   C3c    Frequency 2.55e-15 3.8 e-14 2.6e-15  ****     Kruskal-Wallis
-# 2 Endothelial   C3d    Frequency 1.71e-23 2.6 e-22 < 2e-16  ****     Kruskal-Wallis
-# 3 Endothelial   C4d    Frequency 3.54e-23 5.30e-22 < 2e-16  ****     Kruskal-Wallis
-# 4 Endothelial   C9     Frequency 1.32e-20 2   e-19 < 2e-16  ****     Kruskal-Wallis
-# 5 Endothelial   C1q    Frequency 3.68e-16 5.50e-15 3.7e-16  ****     Kruskal-Wallis
-# 6 Mesangial     C3c    Frequency 2.47e-19 3.7 e-18 < 2e-16  ****     Kruskal-Wallis
-# 7 Mesangial     C3d    Frequency 2.82e-20 4.20e-19 < 2e-16  ****     Kruskal-Wallis
-# 8 Mesangial     C4d    Frequency 1.72e-21 2.6 e-20 < 2e-16  ****     Kruskal-Wallis
-# 9 Mesangial     C9     Frequency 2.38e-18 3.60e-17 < 2e-16  ****     Kruskal-Wallis
-# 10 Mesangial     C1q    Frequency 1.47e-16 2.20e-15 < 2e-16  ****     Kruskal-Wallis
-# 11 PECs/PT_VCAM1 C3c    Frequency 7.66e-10 1.10e- 8 7.7e-10  ****     Kruskal-Wallis
-# 12 PECs/PT_VCAM1 C3d    Frequency 7.37e-12 1.10e-10 7.4e-12  ****     Kruskal-Wallis
-# 13 PECs/PT_VCAM1 C4d    Frequency 1.30e-10 1.9 e- 9 1.3e-10  ****     Kruskal-Wallis
-# 14 PECs/PT_VCAM1 C9     Frequency 3.69e-11 5.50e-10 3.7e-11  ****     Kruskal-Wallis
-# 15 PECs/PT_VCAM1 C1q    Frequency 1.20e-10 1.80e- 9 1.2e-10  ****     Kruskal-Wallis
+# Cells         Marker .y.              p    p.adj p.format p.signif method        
+# <fct>         <fct>  <chr>        <dbl>    <dbl> <chr>    <chr>    <chr>         
+#   1 Mesangial     C3c    Frequency 4.45e-44 6.70e-43 <2e-16   ****     Kruskal-Wallis
+# 2 Mesangial     C3d    Frequency 2.31e-43 3.5 e-42 <2e-16   ****     Kruskal-Wallis
+# 3 Mesangial     C4d    Frequency 1.69e-47 2.5 e-46 <2e-16   ****     Kruskal-Wallis
+# 4 Mesangial     C9     Frequency 1.73e-43 2.60e-42 <2e-16   ****     Kruskal-Wallis
+# 5 Mesangial     C1q    Frequency 4.71e-40 7.10e-39 <2e-16   ****     Kruskal-Wallis
+# 6 Endothelial   C3c    Frequency 1.85e-38 2.8 e-37 <2e-16   ****     Kruskal-Wallis
+# 7 Endothelial   C3d    Frequency 9.20e-49 1.4 e-47 <2e-16   ****     Kruskal-Wallis
+# 8 Endothelial   C4d    Frequency 5.66e-49 8.50e-48 <2e-16   ****     Kruskal-Wallis
+# 9 Endothelial   C9     Frequency 1.03e-47 1.5 e-46 <2e-16   ****     Kruskal-Wallis
+# 10 Endothelial   C1q    Frequency 1.28e-33 1.9 e-32 <2e-16   ****     Kruskal-Wallis
+# 11 PECs/PT_VCAM1 C3c    Frequency 1.58e-29 2.40e-28 <2e-16   ****     Kruskal-Wallis
+# 12 PECs/PT_VCAM1 C3d    Frequency 7.63e-19 1.10e-17 <2e-16   ****     Kruskal-Wallis
+# 13 PECs/PT_VCAM1 C4d    Frequency 5.86e-26 8.80e-25 <2e-16   ****     Kruskal-Wallis
+# 14 PECs/PT_VCAM1 C9     Frequency 2.51e-29 3.8 e-28 <2e-16   ****     Kruskal-Wallis
+# 15 PECs/PT_VCAM1 C1q    Frequency 4.63e-24 7   e-23 <2e-16   ****     Kruskal-Wallis
 
 #Calculate multiple comparisons using wicox test with Bonferroni Correction
 comparisons_df <- compare_means(

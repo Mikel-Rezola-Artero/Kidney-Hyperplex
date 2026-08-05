@@ -11,7 +11,7 @@ library(scales)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only arteries/Processed_Artery.rds"))
+                             "/Only arteries/Processed_Artery_v2.rds"))
 
 
 ####3. FIGURE 4A####
@@ -68,12 +68,12 @@ compare_means(
 )
 #  Marker      .y.      p     p.adj   p.format p.signif    method        
 #  <fct>      <chr>   <dbl>   <dbl>     <chr>   <chr>       <chr>         
-# 1 MPO    Frequency 6.88e- 1 1   e+ 0 0.6875   ns       Kruskal-Wallis
-# 2 CD68   Frequency 8.50e- 8 5.10e- 7 8.5e-08  ****     Kruskal-Wallis
-# 3 C5aR1  Frequency 2.85e-15 1.7 e-14 2.9e-15  ****     Kruskal-Wallis
-# 4 CD11b  Frequency 3.97e- 3 2.4 e- 2 0.0040   **       Kruskal-Wallis
-# 5 CD3    Frequency 1.00e- 1 6   e- 1 0.1002   ns       Kruskal-Wallis
-# 6 CD20   Frequency 1.60e- 3 9.6 e- 3 0.0016   **       Kruskal-Wallis
+# 1 MPO    Frequency 9.47e- 4 5.7 e- 3 0.00095  ***      Kruskal-Wallis
+# 2 CD68   Frequency 2.56e-12 1.5 e-11 2.6e-12  ****     Kruskal-Wallis
+# 3 C5aR1  Frequency 2.07e-26 1.20e-25 < 2e-16  ****     Kruskal-Wallis
+# 4 CD11b  Frequency 1.79e- 6 1.10e- 5 1.8e-06  ****     Kruskal-Wallis
+# 5 CD3    Frequency 3.92e- 1 1   e+ 0 0.39247  ns       Kruskal-Wallis
+# 6 CD20   Frequency 7.32e- 1 1   e+ 0 0.73169  ns       Kruskal-Wallis
 
 #Calculate multiple comparisons using wicox test with Bonferroni Correction
 comparisons_df <- compare_means(
@@ -87,8 +87,8 @@ comparisons_df <- compare_means(
 
 
 #Set y coordinate for p.values
-comparisons_df$y.position <- 0.19
-comparisons_df$y.position[seq(1, nrow(comparisons_df), by = 2)] <- 0.20
+comparisons_df$y.position <- 0.37
+comparisons_df$y.position[seq(1, nrow(comparisons_df), by = 2)] <- 0.40
 
 #Plot Comparisons across disease (FIGURE 4A)
 ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Marker)) +

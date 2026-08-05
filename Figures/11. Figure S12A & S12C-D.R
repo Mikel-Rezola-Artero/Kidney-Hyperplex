@@ -11,10 +11,10 @@ library(scales)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only glomeruli/Processed_Glomeruli.rds"))
+                             "/Only glomeruli/Processed_Glomeruli_v2.rds"))
 
 
-####3. FIGURE S9A####
+####3. FIGURE S12A####
 
 #Extract data from Seurat object
 cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
@@ -40,14 +40,13 @@ Immune_freq$Disease <- factor(Immune_freq$Disease, levels = c("LN","Diabetes","C
 compare_means(
   Frequency ~ Disease,
   data = Immune_freq,
-  method = "kruskal.test",
-  p.adjust.method = "bonferroni")
-# # A tibble: 1 × 6
-#   .y.                p       p.adj  p.format p.signif    method        
-#   <chr>           <dbl>      <dbl>    <chr>   <chr>       <chr>         
-#   1 Frequency 0.000000142 0.00000014 1.4e-07  ****     Kruskal-Wallis
+  method = "kruskal.test")
+#   # A tibble: 1 × 6
+#      .y.             p          p.adj   p.format p.signif     method        
+#     <chr>          <dbl>        <dbl>     <chr>   <chr>        <chr>         
+#   1 Frequency 0.00000000457 0.0000000046 4.6e-09  ****     Kruskal-Wallis
 
-#Plot FIGURE S8A
+#Plot FIGURE S12A
 ggplot(Immune_freq, aes(x = Disease, y = Frequency, fill = Disease)) +
   geom_jitter(size = 0.4) + geom_violin(width = 0.7) + 
   geom_boxplot(width = 0.5,outlier.size = 0.2,alpha = 0.7) +
@@ -75,7 +74,7 @@ ggplot(Immune_freq, aes(x = Disease, y = Frequency, fill = Disease)) +
         legend.position = "none")
 
 
-####4. FIGURE S9C####
+####4. FIGURE S12C####
 
 DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
         features = c("CD68.Pos", "CD163.Pos", "CD11b.Pos", "C5aR1.Pos",
@@ -90,10 +89,10 @@ DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
   guides(
     size = guide_legend(title = "Percentage Positive"),
     color = guide_colorbar(title = "Average Expression")
-  ) #FIGURE S9C
+  ) #FIGURE S12C
 
 
-####5. FIGURE S9D####
+####5. FIGURE S12D####
 
 #Obtain Lupus Immune cell data
 Lupus.Imm <- Seurat.obj[ , Seurat.obj$Disease == "LN" & 
@@ -164,7 +163,7 @@ ggplot(plot_df, aes(x = Marker1, y = Marker2)) +
                                hjust = 0.5, face = "bold"),
     axis.text.y = element_text(face = "bold",size = 10),
     plot.title = element_text(hjust = 0.5, face = "bold")
-  )#FIGURE S9D
+  )#FIGURE S12D
 
 
 ####6. Session Information#####

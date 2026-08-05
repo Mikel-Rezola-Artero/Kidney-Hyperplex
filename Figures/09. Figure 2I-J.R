@@ -65,7 +65,7 @@ df_long$Marker <- factor(df_long$Marker,
                                     "C5b9.Cap","C5b9.Mes","C5b9.Tot.Glom")
                          )
 
-#Calculate multiple comparisons using Wilcox test with Bonferroni Correction
+#Calculate multiple comparisons using Wilcox test with FDR Correction
 comparisons_df <- compare_means(
   C5aR1.den ~ Score,
   data = df_long,

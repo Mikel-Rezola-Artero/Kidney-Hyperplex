@@ -20,7 +20,7 @@ tonsil_list <- lapply(files, read.csv2,sep = ",", check.names = F)#Import data a
 names(tonsil_list) <- paste0("Tonsil",1:4)#Name list elements
 
 
-####3. FIGURE S5B####
+####3. FIGURE S6B####
 
 #Extract Tonsil 3 data
 Tonsil3 <- tonsil_list[["Tonsil3"]]
@@ -46,7 +46,7 @@ plot(x = as.numeric(df.clust$x),#x axis
      xlab = "x", ylab= "y",
      pch = 16,cex = .5,
      main = "B cells Ki67 Positive")
-#We see around 8 follicles
+#We see 7 follicles
 
 #Run hdbscan to automatically detect follicles
 #We inspect the 100-NN distance plot to decide minPts.
@@ -66,7 +66,7 @@ plot(x = as.numeric(df.clust$x),#x axis
 par(mfrow = c(1,1))
 
 
-####4. FIGURE S5C####
+####4. FIGURE S6C####
 
 #Correlation between complement deposits across follicles
 
@@ -93,7 +93,7 @@ M1 <- cor(corr.data,
           use = "pairwise.complete.obs",
           method = "spearman")
 
-#Plot as correlation network (FIGURE S5C)
+#Plot as correlation network (FIGURE S6C)
 colnames(M1) <- sub("_Pos","",colnames(M1))
 rownames(M1) <- colnames(M1)
 qgraph(M1,

@@ -22,7 +22,7 @@ table(duplicated(data$Abrev.),duplicated(data$Name))
 data <- data[-c(2,12,17,19,34),]
 
 
-####3. FIGURE S10A-D####
+####3. FIGURE S14A-D####
 
 #Take glomeruli scoring information and rename columns
 df <- data[,c("C3c_parietal_Score",
@@ -71,7 +71,7 @@ df_long <- pivot_longer(df,
 df_long$Marker <- factor(df_long$Marker,levels = c("C3c.Cap","C3c.Mes","C3c.Tot.Glom",
                                                    "C5b9.Cap","C5b9.Mes","C5b9.Tot.Glom"))
 
-#Calculate multiple comparisons using Wilcox test with Bonferroni Correction
+#Calculate multiple comparisons using Wilcox test with FDR Correction
 comparisons_df <-compare_means(
   C3 ~ Score,
   data = df_long,
@@ -118,7 +118,7 @@ C3.Plot <- ggplot(df_long, aes(x = factor(Score), y = C3, fill = Marker)) +
 
 
 
-#Calculate multiple comparisons using Wilcox test with Bonferroni Correction
+#Calculate multiple comparisons using Wilcox test with FDR Correction
 comparisons_df <-compare_means(
   C4 ~ Score,
   data = df_long,
@@ -163,7 +163,7 @@ C4.Plot <- ggplot(df_long, aes(x = factor(Score), y = C4, fill = Marker)) +
     plot.title = element_text(hjust = 0.5, face = "bold")
   ) + theme(legend.position = "none")
 
-#Calculate multiple comparisons using Wilcox test with Bonferroni Correction
+#Calculate multiple comparisons using Wilcox test with FDR Correction
 comparisons_df <-compare_means(
   dsDNA ~ Score,
   data = df_long,
@@ -209,7 +209,7 @@ dsDNA.Plot <- ggplot(df_long, aes(x = factor(Score), y = dsDNA, fill = Marker)) 
   ) + theme(legend.position = "none")
 
 
-#Calculate multiple comparisons using Wilcox test with Bonferroni Correction
+#Calculate multiple comparisons using Wilcox test with FDR Correction
 comparisons_df <-compare_means(
   eGFR ~ Score,
   data = df_long,
@@ -254,11 +254,11 @@ eGFR.Plot <- ggplot(df_long, aes(x = factor(Score), y = eGFR, fill = Marker)) +
     plot.title = element_text(hjust = 0.5, face = "bold")
   ) + theme(legend.position = "none")
 
-#PLOT THE DATA (FIGURE S10A-D)
+#PLOT THE DATA (FIGURE S14A-D)
 (C3.Plot | C4.Plot) / (dsDNA.Plot | eGFR.Plot)
 
 
-####4. FIGURE S10E-G####
+####4. FIGURE S14E-G####
 
 # Variables to correlate with C5aR1 infiltrate
 variables <- c("C3", "C4", "dsDNA")
@@ -282,7 +282,7 @@ plots <- lapply(seq_along(variables), function(i) {
     )
 })
 
-#Arrange plots (FIGURE S10E-G)
+#Arrange plots (FIGURE S14E-G)
 ggarrange(plotlist = plots, ncol = 3, nrow = 1)
 
 

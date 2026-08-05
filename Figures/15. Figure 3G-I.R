@@ -14,14 +14,16 @@ library(qgraph)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only arteries/Processed_Artery.rds"))
+                             "/Only arteries/Processed_Artery_v2.rds"))
 
 
 ####3. FIGURE 3G####
 
-#VCAM-1 in Arteries across disease and cell types (FIGURE 3G)
-DotPlot(Seurat.obj,split.by = "Disease",
-        features = c("VCAM.1.Pos"),cols = c("lightgray","blue","lightblue"),
+#VCAM-1 in Arteries across diseases (FIGURE 3G)
+DotPlot(Seurat.obj,
+	group.by = "Disease",
+        features = c("VCAM.1.Pos"),
+	cols = c("lightgray","blue","lightblue"),
         scale = FALSE) + 
   labs(title = "VCAM-1 positivity") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -61,12 +63,25 @@ compare_means(
   Frequency ~ Disease,
   data = positive_df,
   group.by = c("Marker"),
-  method = "kruskal.test",
-  p.adjust.method = "bonferroni"
+  method = "kruskal.test"
 )
-#     Marker   .y.           p    p.adj p.format p.signif method        
-#      <chr>  <chr>        <dbl>   <dbl>  <chr>    <chr>    <chr>         
-#   1 VCAM-1 Frequency 7.58e-12 7.6e-12  7.6e-12   **** Kruskal-Wallis
+# Marker    .y.        p     p.adj  p.format p.signif  method        
+# <chr>    <chr>     <dbl>   <dbl>    <chr>   <chr>     <chr>         
+# VCAM-1 Frequency 7.14e-27 7.10e-27 <2e-16   ****  Kruskal-Wallis
+
+#Check comparison results
+compare_means(
+  Frequency ~ Disease,
+  data = positive_df,
+  group.by = c("Marker"),
+  method = "wilcox.test",
+  p.adjust.method = "BH"
+)
+#   Marker    .y.   group1   group2        p    p.adj   p.format p.signif    method  
+#    <chr>   <chr>  <chr>    <chr>       <dbl>  <dbl>     <chr>    <chr>      <chr>   
+# 1 VCAM-1 Frequency LN       Diabetes 3.87e- 2 3.9 e- 2  0.039       *     Wilcoxon
+# 2 VCAM-1 Frequency LN       CCE      2.56e-20 7.70e-20 <2e-16    ****     Wilcoxon
+# 3 VCAM-1 Frequency Diabetes CCE      7.01e-19 1.10e-18 <2e-16    ****     Wilcoxon
 
 #Plot data on VCAM-1 positivity on endothelial cells by Artery and Disease
 ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Disease)) +
@@ -75,13 +90,13 @@ ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Disease)) +
   geom_boxplot(width = 0.5, outlier.size = 0.2, alpha = 0.7) +
   stat_compare_means(
     method = "wilcox.test",
+    p.adjust.method = "BH",
     comparisons = list(c("CCE", "LN"), c("CCE", "Diabetes")),
     label = "p.signif",
     tip.length = 0.01
   ) +
   facet_grid( ~ Marker, switch = "y") +
-  scale_y_continuous(labels = percent_format(),
-                     limits = c(0, 0.15)) +
+  scale_y_continuous(labels = percent_format()) +
   scale_fill_manual(values = c("LN" = "red","Diabetes" ="green","CCE" = "magenta")) +
   theme_classic() +
   labs(
@@ -96,7 +111,6 @@ ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Disease)) +
     title = element_text(face = "bold"),
     plot.title = element_text(hjust = 0.5, face = "bold")
   )
-
 
 ####5. FIGURE 3I####
 

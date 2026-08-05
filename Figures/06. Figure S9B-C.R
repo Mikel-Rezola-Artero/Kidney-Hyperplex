@@ -8,16 +8,16 @@ library(scales)
 
 #Load Processed data
 Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only glomeruli/Processed_Glomeruli.rds"))
+                             "/Only glomeruli/Processed_Glomeruli_v2.rds"))
 
 
-####3. FIGURE S7B####
+####3. FIGURE S9B####
 
 #Plot clusters
 DimPlot(object = Seurat.obj,repel = T,
         label = T,label.box = T,label.size = 5,
-        cols = c("grey","red","yellow","orange","violet"),
-        pt.size = 1.5,reduction = "umap") + NoLegend()
+        cols = c("grey","yellow","red","orange","violet"),
+        pt.size = 0.1,reduction = "umap") + NoLegend()
 
 # #Check if integration worked
 # DimPlot(object = Seurat.obj,repel = T,
@@ -26,7 +26,7 @@ DimPlot(object = Seurat.obj,repel = T,
 # Yes it did!!
 
 
-####4. FIGURE S7C####
+####4. FIGURE S9C####
 
 #Plot Markers for each cluster
 DotPlot(Seurat.obj,

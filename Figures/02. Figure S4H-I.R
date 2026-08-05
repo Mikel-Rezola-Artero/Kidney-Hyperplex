@@ -65,7 +65,7 @@ plot_data <- data.frame(UMAP1 = umap_coords[, 1],
                         UMAP2 = umap_coords[, 2], 
                         CellType = as.character(cell_types))
 
-####3. FIGURE S3H ####
+####3. FIGURE S4H ####
 
 #Modify the labels to fit the manuscript
 plot_data$CellType[plot_data$CellType == "PDC"] <-  "pDCs"
@@ -87,7 +87,7 @@ centroids_median <- plot_data %>%
   group_by(CellType) %>%
   summarise(UMAP1 = median(UMAP1), UMAP2 = median(UMAP2))
 
-# Generate the DimPlot using ggplot2 without Pre-B and Pre-T cells (FIGURE S2H)
+# Generate the DimPlot using ggplot2 without Pre-B and Pre-T cells (FIGURE S4H)
 ggplot(plot_data[plot_data$CellType != "Pre-B cells" & 
                    plot_data$CellType != "preTC",], 
        aes(x = UMAP1, y = UMAP2, color = CellType)) +
@@ -106,7 +106,7 @@ ggplot(plot_data[plot_data$CellType != "Pre-B cells" &
             hjust =0.75)# FIGURE S3H
 
 
-####4. FIGURE S3I ####
+####4. FIGURE S4I ####
 
 #Extract the counts from the sce object for the cells with labels 
 #and the genes of interest
@@ -128,7 +128,7 @@ Tonsil <- CreateSeuratObject(counts = counts.seurat,
 Tonsil@assays$RNA$data <- counts.seurat #add the normalized counts to the data slot
 Tonsil$Cells <- plot_data$CellType[plot_data$CellType != "Pre-B cells" & plot_data$CellType != "preTC"]
 
-#Do the DotPlot (FIGURE S3I)
+#Do the DotPlot (FIGURE S4I)
 DotPlot(Tonsil,features = c("C1QA","C1QB","C1QC","C5AR1",
                             "CD3E", "CD4","CD8A","MKI67",
                             "MS4A1","CD68","CD163"),
