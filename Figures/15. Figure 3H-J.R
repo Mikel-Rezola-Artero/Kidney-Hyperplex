@@ -17,9 +17,9 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only arteries/Processed_Artery_v2.rds"))
 
 
-####3. FIGURE 3G####
+####3. FIGURE 3H####
 
-#VCAM-1 in Arteries across diseases (FIGURE 3G)
+#VCAM-1 in Arteries across diseases (FIGURE 3H)
 DotPlot(Seurat.obj,
 	group.by = "Disease",
         features = c("VCAM.1.Pos"),
@@ -33,7 +33,7 @@ DotPlot(Seurat.obj,
   )
 
 
-####4. FIGURE 3H####
+####4. FIGURE 3I####
 
 #Extract data from Seurat object
 cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
@@ -112,7 +112,7 @@ ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Disease)) +
     plot.title = element_text(hjust = 0.5, face = "bold")
   )
 
-####5. FIGURE 3I####
+####5. FIGURE 3J####
 
 #Correlations for CCE arteries between C' deposits and VCAM-1
 

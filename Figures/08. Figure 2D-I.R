@@ -68,7 +68,7 @@ CCE <- DotPlot(Seurat.obj[, Seurat.obj$Disease == "CCE"],
 LN / DN / CCE
 
 
-####4. FIGURE 2G####
+####4. FIGURE 2H####
 
 #Filter only Lupus slides' data
 Lupus <- Seurat.obj[, Seurat.obj$Disease == "LN"]
@@ -111,7 +111,7 @@ freq_df <- cluster_counts %>%
 mat <- freq_df[,3:14]
 #note that all features are in the same scale from 0 to 1, no scaling needed
 
-#Plot Heatmap (FIGURE 2G)
+#Plot Heatmap (FIGURE 2H)
 heatmap.a <-pheatmap(mat,
                      cluster_rows = T,
                      cluster_cols = F,
@@ -129,7 +129,7 @@ heatmap.a <-pheatmap(mat,
                      angle_col = 315)
 
 
-####5. FIGURE 2H####
+####5. FIGURE 2I####
 
 #Extract clusters, run pairwise wilcox and plot volcano plot
 
@@ -178,7 +178,7 @@ results <- results %>%
     )
   )
 
-#Volcano plot (FIGURE 2H)
+#Volcano plot (FIGURE 2I)
 ggplot(results, aes(x = median_diff, y = neg_log10_p)) +
   geom_point(aes(color = category, alpha = significant), size = 5) +
   geom_text(data = top5, aes(label = marker), 

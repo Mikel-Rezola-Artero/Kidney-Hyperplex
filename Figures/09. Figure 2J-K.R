@@ -23,7 +23,7 @@ table(duplicated(data$Abrev.),duplicated(data$Name))
 data <- data[-c(2,12,17,19,34),]
 
 
-####3. FIGURE 2I####
+####3. FIGURE 2J####
 
 #Take glomeruli scoring information and rename columns
 df <- data[,c("C3c_parietal_Score",
@@ -111,7 +111,7 @@ ggplot(df_long, aes(x = factor(Score), y = C5aR1.den, fill = Marker)) +
   ) + theme(legend.position = "none")
 
 
-####4. FIGURE 2J####
+####4. FIGURE 2K####
 
 #Store clinical measurements of interest 
 C3 <-  as.numeric(data$`C3, g/L (N: 0,75-1,65)`)
@@ -365,7 +365,7 @@ p2 <- ggplot(roc_data, aes(x = fpr, y = tpr, group = predictor_label)) +
 
 p2
 
-#FIGURE 2J
+#FIGURE 2K
 p1 | p2
 
 
