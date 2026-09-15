@@ -87,4 +87,4 @@ If you use this code, please cite:
 ## Contact
 
 For questions or collaboration, contact:
-- Mikel Rezola-Artero (mikel.rezola@gmail.com)
+- Mikel Rezola-Artero (mikelrezola@gmail.com)
