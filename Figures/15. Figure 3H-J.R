@@ -9,6 +9,8 @@ library(scales)
 library(psych)
 library(Matrix)
 library(qgraph)
+library(glmmTMB)
+
 
 ####2. LOAD ARTERY DATA####
 
@@ -33,84 +35,140 @@ DotPlot(Seurat.obj,
   )
 
 
-####4. FIGURE 3I####
+####4. FIGURE 3I: BETA-BINOMIAL MIXED-EFFECTS MODEL####
 
-#Extract data from Seurat object
-cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
-                              "VCAM-1" = Seurat.obj$VCAM.1.Pos,
-                              "Artery" = Seurat.obj$Artery,
-                              "Disease" = Seurat.obj$Disease)
+# Extract data
+cluster_counts <- data.frame(
+  Cells   = Idents(Seurat.obj),
+  VCAM.1  = Seurat.obj$VCAM.1.Pos,
+  Artery  = Seurat.obj$Artery,
+  Patient = Seurat.obj$slide,
+  Disease = Seurat.obj$Disease
+)
 
-#Determine which cells are endothelial and VCAM-1 positive
-cluster_counts$VCAM.1 <- ifelse(cluster_counts$Cells == "Endothelial" & 
-                                  cluster_counts$VCAM.1 == "1",1,0)
+# Define endothelial VCAM-1 positivity
+cluster_counts$VCAM.1 <- ifelse(
+  cluster_counts$Cells == "Endothelial" & cluster_counts$VCAM.1 == "1",
+  1, # 1 =  cell is both endothelial AND VCAM-1+
+  0 # 0 = every other cell in the artery
+)
 
-
-#Obtain data VCAM-1 positivity on endothelial cells across Artery and Disease
-positive_df <- cluster_counts %>%
-  group_by(Disease, Artery) %>%
+# Calculate VCAM-1+ endothelial-cell counts and total cell counts (minus VCAM-1+ endothelial-cell counts) per artery
+count_df <- cluster_counts %>%
+  
+  group_by(Disease, Artery, Patient) %>%
+  
   summarise(
-    "VCAM-1" = mean(VCAM.1),
+    VCAM_Pos = sum(VCAM.1, na.rm = TRUE), # Number of VCAM-1+ endothelial cells
+    Total_Cells = n(), # Total number of cells in the artery
+    .groups = "drop" #remove grouping
   ) %>%
-  pivot_longer(cols = c(-Artery, -Disease),
-               names_to = "Marker", values_to = "Frequency")
+  
+  mutate(
+    Rest_of_Cells = Total_Cells - VCAM_Pos, # Number of cells that are NOT VCAM-1+ endothelial cells
+    Frequency = VCAM_Pos / Total_Cells, # Proportion of all arterial cells that are VCAM-1+ endothelial cells for plot
+    Marker = "VCAM-1")
 
-#Order factor for plot aesthetics
-positive_df$Disease <- factor(positive_df$Disease, levels = c("LN", "Diabetes", "CCE"))
+# Set CCE as the reference group
+count_df$Disease <- factor(count_df$Disease,
+                           levels = c("CCE","LN","Diabetes"))
 
-#Check by Kruskal Wallis if marker variability is explained by Disease
-compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Marker"),
-  method = "kruskal.test"
-)
-# Marker    .y.        p     p.adj  p.format p.signif  method        
-# <chr>    <chr>     <dbl>   <dbl>    <chr>   <chr>     <chr>         
-# VCAM-1 Frequency 7.14e-27 7.10e-27 <2e-16   ****  Kruskal-Wallis
+#Make sure Patient of origin is defined as factor
+count_df$Patient <- factor(count_df$Patient)
 
-#Check comparison results
-compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Marker"),
-  method = "wilcox.test",
-  p.adjust.method = "BH"
-)
-#   Marker    .y.   group1   group2        p    p.adj   p.format p.signif    method  
-#    <chr>   <chr>  <chr>    <chr>       <dbl>  <dbl>     <chr>    <chr>      <chr>   
-# 1 VCAM-1 Frequency LN       Diabetes 3.87e- 2 3.9 e- 2  0.039       *     Wilcoxon
-# 2 VCAM-1 Frequency LN       CCE      2.56e-20 7.70e-20 <2e-16    ****     Wilcoxon
-# 3 VCAM-1 Frequency Diabetes CCE      7.01e-19 1.10e-18 <2e-16    ****     Wilcoxon
+# Fit beta-binomial mixed-effects model to control for pseudo replication
+fit_vcam <- glmmTMB(
+  cbind(VCAM_Pos, Rest_of_Cells) ~ Disease + (1 | Patient),
+  family = betabinomial(link = "logit"), data = count_df)
+# Outcome: VCAM-1+ endothelial cell counts | all other cell counts
+# Covariates: 
+#  1) Disease -> CCE as reference for pre-specified comparisons
+#  2) (1 | Patient) -> Patient included as a random effect with random intercept
 
-#Plot data on VCAM-1 positivity on endothelial cells by Artery and Disease
-ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Disease)) +
-  geom_jitter(size = 0.5, width = 0.2, alpha = 0.5) +
+# Model summary
+summary(fit_vcam)
+# Conditional model:
+#               Estimate Std.    Error       z      value Pr(>|z|)    
+#  (Intercept)      -2.3844     0.2211 -10.786    < 2e-16   ***
+#  DiseaseLN        -3.2861     0.4396  -7.475   7.71e-14   ***
+#  DiseaseDiabetes  -2.1277     0.3684  -5.776   7.67e-09   ***
+fit_vcam$sdr$pdHess # Check model convergence
+#TRUE
+
+#Get the coeffient contrast p-values from model
+comparisons_vcam <- data.frame(contrast = c("CCE vs LN","CCE vs Diabetes"),
+                               p.value = summary(fit_vcam)$coefficients$cond[,'Pr(>|z|)'][c("DiseaseLN", "DiseaseDiabetes")])
+
+#FDR p-value adjustment
+comparisons_vcam$p.adj <- p.adjust(comparisons_vcam$p.value, method = "BH")
+
+#Add significance labels for plot
+comparisons_vcam <- comparisons_vcam %>%
+  mutate(plot_label = case_when(p.adj < 0.0001 ~ "****",
+                                p.adj < 0.001  ~ "***",
+                                p.adj < 0.01   ~ "**",
+                                p.adj < 0.05   ~ "*",
+                                TRUE ~ paste0("P = ",format.pval(p.adj, digits = 3,eps = 0.001))))
+
+# Patient-level summaries for visualization
+# Calculate per patient: VCAM-1+ endothelial cells / total arterial cells
+patient_means <- count_df %>% 
+  group_by(Patient,Disease,Marker) %>%
+  summarise(Frequency = sum(VCAM_Pos) / sum(Total_Cells),
+            .groups = "drop")
+
+# Prepare mixed-model adjusted P values for plotting (coordinate and group)
+comparisons_plot <- comparisons_vcam %>%
+  mutate(
+    group1 = "CCE",
+    group2 = c("LN", "Diabetes"),
+    y.position = c(0.60, 0.65))
+
+# Plot FIGURE 3I
+p_3I <- ggplot(count_df, aes(x = Disease, y = Frequency, fill = Disease)) +
+  
+  # Individual arteries plots
   geom_violin(width = 0.7, alpha = 0.3) +
-  geom_boxplot(width = 0.5, outlier.size = 0.2, alpha = 0.7) +
-  stat_compare_means(
-    method = "wilcox.test",
-    p.adjust.method = "BH",
-    comparisons = list(c("CCE", "LN"), c("CCE", "Diabetes")),
-    label = "p.signif",
-    tip.length = 0.01
-  ) +
-  facet_grid( ~ Marker, switch = "y") +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = c("LN" = "red","Diabetes" ="green","CCE" = "magenta")) +
+  geom_boxplot(width = 0.5, outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(size = 0.5, width = 0.2, alpha = 0.3) +
+  
+  # Patient-level dotplot
+  geom_point(data = patient_means,
+             aes(x = Disease, y = Frequency),
+             inherit.aes = FALSE, 
+             position = position_jitter(width = 0.08, height = 0),
+             shape = 21, size = 2.2, stroke = 0.7, fill = "white") +
+  
+  # Add beta-binomial mixed-model P values
+  stat_pvalue_manual(comparisons_plot, label = "plot_label",
+                     xmin = "group1", xmax = "group2",
+                     y.position = "y.position", 
+                     tip.length = 0.01,
+                     bracket.size = 0.5,
+                     hide.ns = FALSE) +
+  
+  #Adjust y axis
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(-0.01, 0.68),
+                     breaks = c(0, 0.2, 0.4, 0.6)) +
+  
+  #Set colors
+  scale_fill_manual(values = c("LN"       = "red",
+                               "Diabetes" = "green",
+                               "CCE"      = "magenta")) +
+  
+  #Set overall theme, add plot title and adjust x and y axis labels 
   theme_classic() +
-  labs(
-    title = "VCAM-1 Endothelial Cells in Arteries across Diseases",
-    x = "Disease Group",
-    y = "VCAM-1 Pos Endo by Artery (%)",
-    fill = "Marker"
-  ) +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    title = element_text(face = "bold"),
-    plot.title = element_text(hjust = 0.5, face = "bold")
-  )
+  labs(title = "VCAM-1+ Endothelial Cells in Arteries across Diseases",
+       x = "Disease Group",
+       y = "VCAM-1+ Endothelial Cells (% of Arterial Cells)") +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        title = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+#Plot
+p_3I
 
 ####5. FIGURE 3J####
 
@@ -178,68 +236,32 @@ qgraph(cor_matrix,
        node.resolution = 100,
        repulsion = 0.1,
        label.scale=F,
-       graph = "association",
        posCol = c("brown"),negCol =c("blue"))
+
 
 ####6. Session Information####
 
 sessionInfo()
 
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
+# R version 4.6.1 (2026-06-24)
+# Platform: x86_64-pc-linux-gnu
+# Running under: Ubuntu 24.04.4 LTS
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8       
-# [4] LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-# [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+# [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8   
+# [6] LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C            
+# [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
 # 
 # attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods   base     
-# 
+# [1] stats     graphics  grDevices utils     datasets  methods   base  
+#
 # other attached packages:
-#   [1] qgraph_1.9.8       Matrix_1.6-5       psych_2.5.3        scales_1.4.0       ggpubr_0.6.0      
-# [6] ggplot2_3.5.2      tidyr_1.3.1        dplyr_1.1.4        Seurat_5.3.0       SeuratObject_5.1.0
-# [11] sp_2.2-0           rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3         spatstat.utils_3.1-4  
-# [5] rmarkdown_2.29         farver_2.1.2           vctrs_0.6.5            ROCR_1.0-11           
-# [9] spatstat.explore_3.4-3 base64enc_0.1-3        rstatix_0.7.2          htmltools_0.5.8.1     
-# [13] broom_1.0.8            Formula_1.2-5          sctransform_0.4.2      parallelly_1.45.0     
-# [17] KernSmooth_2.23-26     htmlwidgets_1.6.4      ica_1.0-3              plyr_1.8.9            
-# [21] plotly_4.10.4          zoo_1.8-12             igraph_2.1.4           mime_0.13             
-# [25] lifecycle_1.0.4        pkgconfig_2.0.3        R6_2.6.1               fastmap_1.2.0         
-# [29] fitdistrplus_1.1-11    future_1.58.0          shiny_1.10.0           fdrtool_1.2.18        
-# [33] digest_0.6.37          colorspace_2.1-1       patchwork_1.3.0        tensor_1.5            
-# [37] RSpectra_0.16-1        irlba_2.3.5.1          Hmisc_5.2-3            labeling_0.4.3        
-# [41] progressr_0.15.1       spatstat.sparse_3.1-0  httr_1.4.7             polyclip_1.10-7       
-# [45] abind_1.4-8            compiler_4.3.2         withr_3.0.2            glasso_1.11           
-# [49] htmlTable_2.4.3        backports_1.5.0        carData_3.0-5          fastDummies_1.7.5     
-# [53] ggsignif_0.6.4         MASS_7.3-60            corpcor_1.6.10         gtools_3.9.5          
-# [57] pbivnorm_0.6.0         tools_4.3.2            foreign_0.8-90         lmtest_0.9-40         
-# [61] httpuv_1.6.16          future.apply_1.11.0    nnet_7.3-19            goftest_1.2-3         
-# [65] quadprog_1.5-8         glue_1.8.0             nlme_3.1-168           promises_1.3.3        
-# [69] grid_4.3.2             checkmate_2.3.2        Rtsne_0.17             cluster_2.1.6         
-# [73] reshape2_1.4.4         generics_0.1.3         gtable_0.3.6           spatstat.data_3.1-6   
-# [77] data.table_1.17.4      utf8_1.2.6             car_3.1-3              spatstat.geom_3.4-1   
-# [81] RcppAnnoy_0.0.22       ggrepel_0.9.6          RANN_2.6.1             pillar_1.10.2         
-# [85] stringr_1.5.1          spam_2.11-1            RcppHNSW_0.6.0         later_1.4.2           
-# [89] splines_4.3.2          lattice_0.22-7         survival_3.8-3         deldir_1.0-9          
-# [93] tidyselect_1.2.1       miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.50            
-# [97] gridExtra_2.3          scattermore_1.2        stats4_4.3.2           xfun_0.52             
-# [101] matrixStats_1.5.0      stringi_1.8.7          lazyeval_0.2.2         evaluate_1.0.3        
-# [105] codetools_0.2-19       tibble_3.2.1           cli_3.6.5              uwot_0.2.3            
-# [109] rpart_4.1.24           xtable_1.8-4           reticulate_1.42.0      lavaan_0.6-19         
-# [113] dichromat_2.0-0.1      Rcpp_1.0.14            globals_0.18.0         spatstat.random_3.4-1 
-# [117] png_0.1-8              spatstat.univar_3.1-3  parallel_4.3.2         dotCall64_1.2         
-# [121] jpeg_0.1-10            listenv_0.9.0          viridisLite_0.4.2      ggridges_0.5.4        
-# [125] purrr_1.0.4            rlang_1.1.6            cowplot_1.1.3          mnormt_2.1.1 
+# [1] glmmTMB_1.1.14     scales_1.4.0       ggpubr_1.0.0       ggplot2_4.0.3      dplyr_1.2.1        Seurat_5.5.1       SeuratObject_5.4.0 sp_2.2-3   
+# [8] qgraph_1.9.8       Matrix_1.6-5       psych_2.5.3      tidyr_1.3.1      rstudioapi_0.17.1 

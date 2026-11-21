@@ -1,11 +1,12 @@
-####1. LOAD LIBRARIES####
+#### 1. LOAD LIBRARIES ####
 library(rstudioapi)
+library(tidyr)
 library(Seurat)
 library(dplyr)
-library(tidyr)
+library(ggplot2)
 library(ggpubr)
 library(scales)
-library(ggplot2)
+library(glmmTMB)
 
 ####2. LOAD GLOMERULI DATA####
 
@@ -14,138 +15,250 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only glomeruli/Processed_Glomeruli_v2.rds"))
 
 
-####3. FIGURE S11A####
+#### 3. PREPARE DATA FOR FIGURE S11A ####
 
-#Show C deposits on for Endothelial Cells, Mesangial Cells & "PECs/PT-Conv" at Glomeruli level
-Endo.Mes.PECs <- Seurat.obj[ ,
-                             (Idents(Seurat.obj) == "Endothelial" |
-                                Idents(Seurat.obj) == "Mesangial" |
-                                Idents(Seurat.obj) == "PECs/PT_VCAM1") ]
-cluster_counts <-  data.frame("Cells" = Idents(Endo.Mes.PECs),
-                              "Glomeruli" = Endo.Mes.PECs$Glomeruli,
-                              "C1q" = Endo.Mes.PECs$C1q.Pos,
-                              "C4d" = Endo.Mes.PECs$C4d.Pos,
-                              "C3c" = Endo.Mes.PECs$C3c.Pos,
-                              "C3d" = Endo.Mes.PECs$C3d.Pos,
-                              "C9" = Endo.Mes.PECs$C9.Pos,
-                              "Patient" = Endo.Mes.PECs$slide,
-                              "Disease" = Endo.Mes.PECs$Disease
+# Filter endothelial, mesangial and PECs/PT_VCAM1 cells
+Endo.Mes.PECs <- Seurat.obj[, Idents(Seurat.obj) %in% c("Endothelial", "Mesangial", "PECs/PT_VCAM1")]
+
+# Extract data
+cluster_counts <- data.frame(
+  Cells     = Idents(Endo.Mes.PECs),
+  Glomeruli = Endo.Mes.PECs$Glomeruli,
+  C1q       = Endo.Mes.PECs$C1q.Pos,
+  MBL       = Endo.Mes.PECs$MBL.Pos,
+  C4d       = Endo.Mes.PECs$C4d.Pos,
+  C3c       = Endo.Mes.PECs$C3c.Pos,
+  C3d       = Endo.Mes.PECs$C3d.Pos,
+  C9        = Endo.Mes.PECs$C9.Pos,
+  Patient   = Endo.Mes.PECs$slide,
+  Disease   = Endo.Mes.PECs$Disease
 )
 
-#Summarize by Glomeruli, Cell Type, Patient and Disease
-positive_df <- cluster_counts %>%
-  group_by(Cells, Disease, Glomeruli, Patient) %>%
+# Calculate marker-positive counts within each cell type for each glomerulus
+count_df <- cluster_counts %>%
+  group_by(Cells,Disease,Glomeruli,Patient) %>%
   summarise(
-    C3c = mean(C3c),
-    C3d = mean(C3d),
-    C4d = mean(C4d),
-    C9 = mean(C9),
-    C1q = mean(C1q),
-    .groups = "drop" ) %>% 
-  pivot_longer(cols = c(-Cells, -Glomeruli, -Disease, -Patient),
-               names_to = "Marker", 
-               values_to = "Frequency")
-  
-
-#Order factor for plot aesthetics
-positive_df$Cells <- factor(positive_df$Cells,levels = c("Endothelial","Mesangial","PECs/PT_VCAM1"))
-positive_df$Marker <- factor(positive_df$Marker,levels = c("C1q","C4d","C3c","C3d","C9"))
-positive_df$Disease <- factor(positive_df$Disease, levels = c("LN","Diabetes","CCE"))
-
-
-#Check by Kruskal Wallis if all markers' variability is explained by Disease
-compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Cells", "Marker"),
-  method = "kruskal.test",
-  p.adjust.method = "bonferroni"
-)
-# # A tibble: 15 × 8
-# Cells         Marker .y.              p    p.adj p.format p.signif method        
-# <fct>         <fct>  <chr>        <dbl>    <dbl> <chr>    <chr>    <chr>         
-#   1 Mesangial     C3c    Frequency 4.45e-44 6.70e-43 <2e-16   ****     Kruskal-Wallis
-# 2 Mesangial     C3d    Frequency 2.31e-43 3.5 e-42 <2e-16   ****     Kruskal-Wallis
-# 3 Mesangial     C4d    Frequency 1.69e-47 2.5 e-46 <2e-16   ****     Kruskal-Wallis
-# 4 Mesangial     C9     Frequency 1.73e-43 2.60e-42 <2e-16   ****     Kruskal-Wallis
-# 5 Mesangial     C1q    Frequency 4.71e-40 7.10e-39 <2e-16   ****     Kruskal-Wallis
-# 6 Endothelial   C3c    Frequency 1.85e-38 2.8 e-37 <2e-16   ****     Kruskal-Wallis
-# 7 Endothelial   C3d    Frequency 9.20e-49 1.4 e-47 <2e-16   ****     Kruskal-Wallis
-# 8 Endothelial   C4d    Frequency 5.66e-49 8.50e-48 <2e-16   ****     Kruskal-Wallis
-# 9 Endothelial   C9     Frequency 1.03e-47 1.5 e-46 <2e-16   ****     Kruskal-Wallis
-# 10 Endothelial   C1q    Frequency 1.28e-33 1.9 e-32 <2e-16   ****     Kruskal-Wallis
-# 11 PECs/PT_VCAM1 C3c    Frequency 1.58e-29 2.40e-28 <2e-16   ****     Kruskal-Wallis
-# 12 PECs/PT_VCAM1 C3d    Frequency 7.63e-19 1.10e-17 <2e-16   ****     Kruskal-Wallis
-# 13 PECs/PT_VCAM1 C4d    Frequency 5.86e-26 8.80e-25 <2e-16   ****     Kruskal-Wallis
-# 14 PECs/PT_VCAM1 C9     Frequency 2.51e-29 3.8 e-28 <2e-16   ****     Kruskal-Wallis
-# 15 PECs/PT_VCAM1 C1q    Frequency 4.63e-24 7   e-23 <2e-16   ****     Kruskal-Wallis
-
-#Calculate multiple comparisons using wicox test with Bonferroni Correction
-comparisons_df <- compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Cells", "Marker"),
-  ref.group = "LN",
-  method = "wilcox.test",
-  p.adjust.method = "bonferroni"
-)
-
-#Set y coordinate for p.values
-comparisons_df$y.position <- 1.05
-comparisons_df$y.position[seq(1, nrow(comparisons_df), by = 2)] <- 1.15
-
-#Plot Comparisons across disease
-ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Marker)) +
-  geom_jitter(size = 0.5, width = 0.2, alpha = 0.5) +
-  geom_violin(width = 0.7, alpha = 0.3) +
-  geom_boxplot(width = 0.5, outlier.size = 0.2, alpha = 0.7) +
-  stat_pvalue_manual(
-    comparisons_df,
-    label = "p.signif",
-    tip.length = 0.01,
-    bracket.size = 0.5,
-    hide.ns = TRUE) +
-  facet_grid(Cells ~ Marker, switch = "y") +
-  scale_y_continuous(labels = percent_format(), limits = c(0, 1.2)) +
-  scale_fill_manual(values = c(
-    "C1q" = "lightblue", "MBL" = "green", "C3c" = "orange",
-    "C3d" = "red", "C4d" = "violet", "C9" = "royalblue"
-  )) +
-  theme_classic() +
-  labs(
-    title = "Complement Deposits on Glomeruli across Diseases",
-    x = "Disease Group",
-    y = "Positive Cell Frequency (%)",
-    fill = "Marker"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    title = element_text(face = "bold"),
-    plot.title = element_text(hjust = 0.5, face = "bold")
-  ) + scale_y_continuous(
-    labels = percent_format(accuracy = 1),
-    limits = c(0, 1.2),
-    breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0)
+    
+    # Pos cell counts
+    C1q_Pos = sum(C1q, na.rm = TRUE), 
+    MBL_Pos = sum(MBL, na.rm = TRUE),
+    C4d_Pos = sum(C4d, na.rm = TRUE),
+    C3c_Pos = sum(C3c, na.rm = TRUE),
+    C3d_Pos = sum(C3d, na.rm = TRUE),
+    C9_Pos  = sum(C9,  na.rm = TRUE),
+    
+    # Total number of specific cell type within specific glomerulus
+    Total_Cells = n(),
+    
+    .groups = "drop"
   )
 
 
-####4. Session Information#####
+# Convert to long format
+positive_df <- count_df %>% 
+  pivot_longer(cols = c(C1q_Pos, MBL_Pos, C4d_Pos, C3c_Pos, C3d_Pos, C9_Pos),
+               names_to = "Marker", values_to = "Positive") %>%
+  mutate(Marker = sub("_Pos$", "", Marker), # Clean marker names
+         Negative = Total_Cells - Positive, #Rest of specific cells not positive for current marker
+         Frequency = Positive / Total_Cells)# Glomerulus-level proportion for visualization
+
+# Set factor order for plots
+positive_df$Cells <- factor(positive_df$Cells,
+                            levels = c("Endothelial","Mesangial","PECs/PT_VCAM1"))
+marker_order <- c("C1q","MBL","C4d","C3c","C3d","C9")
+positive_df$Marker <- factor(positive_df$Marker,levels = marker_order)
+
+# Set LN as the reference disease
+positive_df$Disease <- factor(positive_df$Disease, levels = c("LN", "Diabetes", "CCE"))
+
+# Make sure patient of origin is a factor
+positive_df$Patient <- factor(positive_df$Patient)
+
+
+#### 4. BETA-BINOMIAL MIXED-EFFECTS MODEL PER CELL TYPE × MARKER ####
+
+bb_models <- list()
+bb_comparisons <- list()
+
+for (cell_type in levels(positive_df$Cells)) {
+  
+  for (marker in levels(positive_df$Marker)) {
+    
+    # Load data for current cell type × marker
+    tmp <- positive_df %>%
+      filter(
+        Cells == cell_type,
+        Marker == marker,
+        !is.na(Positive),
+        !is.na(Negative),
+        !is.na(Disease),
+        !is.na(Patient)
+      ) %>%
+      droplevels()
+    
+    #Fit Beta Binomial using counts
+    fit <- glmmTMB(cbind(Positive,Negative) ~ Disease + (1 | Patient),
+                   family = betabinomial(link = "logit"), 
+                   data = tmp)
+    # Outcome: marker-positive cells | all remaining cells
+    # Covariates: 
+    #  1) Disease -> LN as reference for pre-specified comparisons
+    #  2) (1 | Patient) -> Patient included as a random effect with random intercept
+    
+    # Save model name
+    model_name <- paste(cell_type, marker, sep = "_")
+    
+    # Save model for convergence checks
+    bb_models[[model_name]] <- fit
+    
+    # Extract coefficient P values
+    comp_df <- data.frame(contrast = c("LN vs Diabetes", "LN vs CCE"),
+                          Cells = cell_type,
+                          Marker = marker,
+                          p.value = summary(fit)$coefficients$cond[c("DiseaseDiabetes","DiseaseCCE"),"Pr(>|z|)"])
+    
+    # Store coefficient contrast results
+    bb_comparisons[[model_name]] <- comp_df
+  }
+}
+
+# Check models' convergences
+print(data.frame(Model = names(bb_models),
+                 pdHess = sapply(bb_models,
+                                 function(x) x$sdr$pdHess),
+                 row.names = NULL))
+#              Model pdHess
+#    Endothelial_C1q   TRUE
+#    Endothelial_MBL   TRUE
+#    Endothelial_C4d   TRUE
+#    Endothelial_C3c   TRUE
+#    Endothelial_C3d   TRUE
+#     Endothelial_C9   TRUE
+#      Mesangial_C1q   TRUE
+#      Mesangial_MBL   TRUE
+#      Mesangial_C4d   TRUE
+#      Mesangial_C3c   TRUE
+#      Mesangial_C3d   TRUE
+#       Mesangial_C9   TRUE
+#  PECs/PT_VCAM1_C1q   TRUE
+#  PECs/PT_VCAM1_MBL   TRUE
+#  PECs/PT_VCAM1_C4d   TRUE
+#  PECs/PT_VCAM1_C3c   TRUE
+#  PECs/PT_VCAM1_C3d   TRUE
+#   PECs/PT_VCAM1_C9   TRUE
+
+# Combine all raw coefficient P values
+bb_results <- bind_rows(bb_comparisons)
+
+# Apply Global BH/FDR correction
+bb_results$p.adj <- p.adjust(bb_results$p.value, method = "BH")
+
+# Add significance labels
+bb_results <- bb_results %>%
+  mutate(p.signif = case_when(p.adj < 0.0001 ~ "****",
+                              p.adj < 0.001  ~ "***",
+                              p.adj < 0.01   ~ "**",
+                              p.adj < 0.05   ~ "*",
+                              TRUE           ~ "ns"))
+
+
+#### 5. PATIENT-LEVEL VALUES FOR VISUALIZATION ####
+
+patient_means <- positive_df %>%
+  group_by(Patient, Disease, Cells, Marker) %>%
+  summarise(Frequency = sum(Positive) / sum(Total_Cells), .groups = "drop")
+
+#### 6. PREPARE RESULTS FOR PLOTTING ####
+
+# Set p value comparisons and y axis locations for plots
+comparisons_plot <- bb_results %>%
+  mutate(group1 = "LN",
+         group2 = case_when(contrast == "LN vs Diabetes" ~ "Diabetes",
+                            contrast == "LN vs CCE"      ~ "CCE"),
+         y.position = case_when(contrast == "LN vs Diabetes" ~ 1.05,
+                                contrast == "LN vs CCE"      ~ 1.15))
+
+# Force facet order across dataframes
+marker_order <- c("C1q", "MBL", "C4d", "C3c", "C3d", "C9")
+positive_df$Marker <- factor(positive_df$Marker, levels = marker_order)
+patient_means$Marker <- factor(patient_means$Marker, levels = marker_order)
+comparisons_plot$Marker <- factor(comparisons_plot$Marker, levels = marker_order)
+positive_df$Cells <- factor(positive_df$Cells, 
+                            levels = c("Endothelial", "Mesangial", "PECs/PT_VCAM1"))
+patient_means$Cells <- factor(patient_means$Cells, levels = levels(positive_df$Cells))
+comparisons_plot$Cells <- factor(comparisons_plot$Cells, levels = levels(positive_df$Cells))
+
+
+#### 7. FIGURE S11A ####
+
+p_S11A <- ggplot(positive_df,
+                 aes(x = Disease, y = Frequency, fill = Marker)) +
+  # Individual glomerulus plots
+  geom_violin(width = 0.7, alpha = 0.3) +
+  geom_boxplot(width = 0.5, outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(size = 0.5, width = 0.2, alpha = 0.3) +
+  
+  # Patient-level values
+  geom_point(data = patient_means, aes(x = Disease, y = Frequency),
+             inherit.aes = FALSE, 
+             position = position_jitter(width = 0.08, height = 0),
+             shape = 21, size = 2.2, stroke = 0.7, fill = "white") +
+  
+  # Add Beta-binomial GLMM-derived globally adjusted P values
+  stat_pvalue_manual(comparisons_plot,
+                     label = "p.signif",
+                     xmin = "group1", xmax = "group2",
+                     y.position = "y.position",
+                     tip.length = 0.01, bracket.size = 0.5, hide.ns = TRUE) +
+  
+  # Facet by cell type × complement marker
+  facet_grid(Cells ~ Marker, switch = "y") +
+  
+  # Y axis
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(-0.01, 1.20),
+                     breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0)) +
+  # Marker colours
+  scale_fill_manual(values = c("C1q" = "lightblue",
+                               "MBL" = "brown",
+                               "C4d" = "violet",
+                               "C3c" = "orange",
+                               "C3d" = "red",
+                               "C9"  = "royalblue")) +
+  
+  # Labels
+  labs(title = "Complement Deposits on Glomeruli across Diseases",
+       x = "Disease Group",
+       y = "Complement-Positive Cells (%)",
+       fill = "Marker") +
+  
+  # Theme
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        title = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+p_S11A
+
+
+#### 8. SESSION INFORMATION ####
 
 sessionInfo()
 
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
+# R version 4.6.1 (2026-06-24)
+# Platform: x86_64-pc-linux-gnu
+# Running under: Ubuntu 24.04.4 LTS
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8       
-# [4] LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-# [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+# [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    
+# [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
+# [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
@@ -154,34 +267,5 @@ sessionInfo()
 #   [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] scales_1.4.0       tidyr_1.3.1        dplyr_1.1.4        ggpubr_0.6.0       ggplot2_3.5.2     
-# [6] Seurat_5.3.0       SeuratObject_5.1.0 sp_2.2-0           rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] deldir_1.0-9           pbapply_1.7-2          gridExtra_2.3          rlang_1.1.6           
-# [5] magrittr_2.0.3         RcppAnnoy_0.0.22       matrixStats_1.5.0      ggridges_0.5.4        
-# [9] compiler_4.3.2         spatstat.geom_3.4-1    png_0.1-8              vctrs_0.6.5           
-# [13] reshape2_1.4.4         stringr_1.5.1          pkgconfig_2.0.3        fastmap_1.2.0         
-# [17] backports_1.5.0        utf8_1.2.6             promises_1.3.3         purrr_1.0.4           
-# [21] jsonlite_2.0.0         goftest_1.2-3          later_1.4.2            spatstat.utils_3.1-4  
-# [25] broom_1.0.8            irlba_2.3.5.1          parallel_4.3.2         cluster_2.1.6         
-# [29] R6_2.6.1               ica_1.0-3              stringi_1.8.7          RColorBrewer_1.1-3    
-# [33] spatstat.data_3.1-6    reticulate_1.42.0      car_3.1-3              parallelly_1.45.0     
-# [37] spatstat.univar_3.1-3  lmtest_0.9-40          scattermore_1.2        Rcpp_1.0.14           
-# [41] tensor_1.5             future.apply_1.11.0    zoo_1.8-12             sctransform_0.4.2     
-# [45] httpuv_1.6.16          Matrix_1.6-5           splines_4.3.2          igraph_2.1.4          
-# [49] tidyselect_1.2.1       dichromat_2.0-0.1      abind_1.4-8            codetools_0.2-19      
-# [53] spatstat.random_3.4-1  miniUI_0.1.1.1         spatstat.explore_3.4-3 listenv_0.9.0         
-# [57] lattice_0.22-7         tibble_3.2.1           plyr_1.8.9             withr_3.0.2           
-# [61] shiny_1.10.0           ROCR_1.0-11            Rtsne_0.17             future_1.58.0         
-# [65] fastDummies_1.7.5      survival_3.8-3         polyclip_1.10-7        fitdistrplus_1.1-11   
-# [69] pillar_1.10.2          carData_3.0-5          KernSmooth_2.23-26     plotly_4.10.4         
-# [73] generics_0.1.3         RcppHNSW_0.6.0         globals_0.18.0         xtable_1.8-4          
-# [77] glue_1.8.0             lazyeval_0.2.2         tools_4.3.2            data.table_1.17.4     
-# [81] RSpectra_0.16-1        ggsignif_0.6.4         RANN_2.6.1             dotCall64_1.2         
-# [85] cowplot_1.1.3          grid_4.3.2             nlme_3.1-168           patchwork_1.3.0       
-# [89] Formula_1.2-5          cli_3.6.5              spatstat.sparse_3.1-0  spam_2.11-1           
-# [93] viridisLite_0.4.2      uwot_0.2.3             gtable_0.3.6           rstatix_0.7.2         
-# [97] digest_0.6.37          progressr_0.15.1       ggrepel_0.9.6          htmlwidgets_1.6.4     
-# [101] farver_2.1.2           htmltools_0.5.8.1      lifecycle_1.0.4        httr_1.4.7            
-# [105] mime_0.13              MASS_7.3-60 
+# [1] glmmTMB_1.1.14     scales_1.4.0       ggpubr_1.0.0       ggplot2_4.0.3      dplyr_1.2.1        Seurat_5.5.1      
+# [7] SeuratObject_5.4.0 sp_2.2-3           tidyr_1.3.2       rstudioapi_0.17.1  

@@ -6,6 +6,8 @@ library(tidyr)
 library(ggpubr)
 library(ggplot2)
 library(scales)
+library(glmmTMB)
+
 
 ####2. LOAD ARTERY DATA####
 
@@ -16,108 +18,197 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
 
 ####3. FIGURE 4A####
 
-#Plot Immune subcluster frequencies by artery and disease
+#Plot Immune cell frequencies by artery and disease
 
-#Extract data from Seurat object
-cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
-                              "Patient" = Seurat.obj$slide,
-                              "CD68" = Seurat.obj$CD68.Pos,
-                              "C5aR1" = Seurat.obj$C5aR1.Pos,
-                              "CD11b" = Seurat.obj$CD11b.Pos,
-                              "CD3" = Seurat.obj$CD3.Pos,
-                              "CD20" = Seurat.obj$CD20.Pos,
-                              "MPO" = Seurat.obj$MPO.Pos,
-                              "Artery" = Seurat.obj$Artery,
-                              "Disease" = Seurat.obj$Disease)
+# Extract data
+cluster_counts <- data.frame(
+  Cells   = Idents(Seurat.obj),
+  Patient = Seurat.obj$slide,
+  MPO     = Seurat.obj$MPO.Pos,
+  CD68    = Seurat.obj$CD68.Pos,
+  C5aR1   = Seurat.obj$C5aR1.Pos,
+  CD11b   = Seurat.obj$CD11b.Pos,
+  CD3     = Seurat.obj$CD3.Pos,
+  CD20    = Seurat.obj$CD20.Pos,
+  Artery  = Seurat.obj$Artery,
+  Disease = Seurat.obj$Disease
+)
 
-#Modify Marker positivity to consider only the Immune cell cluster cells 
-cluster_counts$MPO <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$MPO == "1",1,0)
-cluster_counts$CD68 <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$CD68 == "1",1,0)
-cluster_counts$C5aR1 <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$C5aR1 == "1",1,0)
-cluster_counts$CD11b <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$CD11b == "1",1,0)
-cluster_counts$CD3 <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$CD3 == "1",1,0)
-cluster_counts$CD20 <- ifelse(cluster_counts$Cells == "Immune" & cluster_counts$CD20 == "1",1,0)
+# Define marker-positive immune cells (MPO, CD68, C5aR1, CD11b, CD20, CD3)
+cluster_counts$MPO <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$MPO == "1", 1, 0)
+cluster_counts$CD68 <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$CD68 == "1", 1, 0)
+cluster_counts$C5aR1 <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$C5aR1 == "1", 1, 0)
+cluster_counts$CD11b <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$CD11b == "1", 1, 0)
+cluster_counts$CD3 <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$CD3 == "1", 1, 0)
+cluster_counts$CD20 <- ifelse(
+  cluster_counts$Cells == "Immune" & cluster_counts$CD20 == "1", 1, 0)
 
-#Calculate frequency by Artery
-positive_df <- cluster_counts %>%
+# Calculate marker-positive counts per artery
+count_df <- cluster_counts %>%
   group_by(Disease, Artery, Patient) %>%
   summarise(
-    MPO = mean(MPO),
-    CD68 = mean(CD68),
-    C5aR1 = mean(C5aR1),
-    CD11b = mean(CD11b),
-    CD3 = mean(CD3),
-    CD20 = mean(CD20),
-    .groups = "drop"
-  ) %>%
-  pivot_longer(cols = c(-Artery, -Disease, -Patient),
-               names_to = "Marker", values_to = "Frequency")
+    MPO_Pos   = sum(MPO, na.rm = TRUE), # MPO immune-cell counts
+    CD68_Pos  = sum(CD68, na.rm = TRUE), # CD68 immune-cell counts
+    C5aR1_Pos = sum(C5aR1, na.rm = TRUE), # C5aR1 immune-cell counts
+    CD11b_Pos = sum(CD11b, na.rm = TRUE), # CD11b immune-cell counts
+    CD20_Pos  = sum(CD20, na.rm = TRUE), # CD20 immune-cell counts
+    CD3_Pos   = sum(CD3, na.rm = TRUE), # CD3 immune-cell counts
+    Total_Cells = n(), # Total number of cells in the artery
+    .groups = "drop")
 
-#Order factor for plot aesthetics
-positive_df$Disease <- factor(positive_df$Disease, levels = c("LN", "Diabetes", "CCE"))
-positive_df$Marker <- factor(positive_df$Marker,levels = c("MPO","CD68","C5aR1","CD11b","CD20","CD3"))
+# Convert to long format
+positive_df <- count_df %>%
+  pivot_longer(cols = c(MPO_Pos, CD68_Pos, C5aR1_Pos, CD11b_Pos, CD20_Pos, CD3_Pos),
+               names_to = "Marker", values_to = "Positive") %>%
+  mutate(Marker = sub("_Pos$","",Marker), # Clean marker names
+         Negative = Total_Cells - Positive, # Rest of cells that are not Specific Marker Positive immune cells
+         Frequency = Positive / Total_Cells) # Artery-level proportion for visualization
+
+# Set CCE as reference for the beta binomial model
+positive_df$Disease <- factor(positive_df$Disease, levels = c("CCE","LN","Diabetes"))
+
+#Order markers for the plot aesthetics
+marker_order <- c("MPO", "CD68", "C5aR1", "CD11b", "CD20", "CD3")
+positive_df$Marker <- factor(positive_df$Marker, levels = marker_order)
+
+#Make sure Patient of origin is defined as a factor
+positive_df$Patient <- factor(positive_df$Patient)
+
+#Beta bnomial mixed-effects model analysis per immue marker
+bb_models <- list()
+bb_comparisons <- list()
 
 
-#Check by Kruskal Wallis if all markers' variability is explained by Disease
-compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Marker"),
-  method = "kruskal.test",
-  p.adjust.method = "bonferroni"
+for (marker in levels(positive_df$Marker)) {
+  
+  # Load data for current immune marker
+  tmp <- positive_df %>%
+    filter(Marker == marker, 
+           !is.na(Positive), !is.na(Negative), !is.na(Disease),!is.na(Patient)
+    ) %>% droplevels()
+  
+  #Fit Beta Binomial using counts
+  fit <- glmmTMB(
+    cbind(Positive, Negative) ~ Disease + (1 | Patient),
+    family = betabinomial(link = "logit"),
+    data = tmp)
+  # Outcome: Marker+ immune cell counts | all other cell counts
+  # Covariates: 
+  #  1) Disease -> CCE as reference for pre-specified comparisons
+  #  2) (1 | Patient) -> Patient included as a random effect with random intercept
+  
+  #Save model to check convergence later on
+  bb_models[[marker]] <- fit
+  
+  
+  #Get the coeffient contrast p-values from model
+  comp_df <- data.frame(contrast = c("CCE vs LN","CCE vs Diabetes"),
+                        Marker = marker,
+                        p.value = summary(fit)$coefficients$cond[,'Pr(>|z|)'][c("DiseaseLN", "DiseaseDiabetes")])
+  
+  #Store Coefficient contrast results
+  bb_comparisons[[marker]] <- comp_df
+}
+
+# Check models' convergences
+print(
+  data.frame(Marker = names(bb_models),
+             pdHess = sapply(bb_models, function(x) x$sdr$pdHess))
 )
-#  Marker      .y.      p     p.adj   p.format p.signif    method        
-#  <fct>      <chr>   <dbl>   <dbl>     <chr>   <chr>       <chr>         
-# 1 MPO    Frequency 9.47e- 4 5.7 e- 3 0.00095  ***      Kruskal-Wallis
-# 2 CD68   Frequency 2.56e-12 1.5 e-11 2.6e-12  ****     Kruskal-Wallis
-# 3 C5aR1  Frequency 2.07e-26 1.20e-25 < 2e-16  ****     Kruskal-Wallis
-# 4 CD11b  Frequency 1.79e- 6 1.10e- 5 1.8e-06  ****     Kruskal-Wallis
-# 5 CD3    Frequency 3.92e- 1 1   e+ 0 0.39247  ns       Kruskal-Wallis
-# 6 CD20   Frequency 7.32e- 1 1   e+ 0 0.73169  ns       Kruskal-Wallis
+# Marker pdHess
+#    MPO   TRUE
+#   CD68   TRUE
+#  C5aR1   TRUE
+#  CD11b   TRUE
+#   CD20   TRUE
+#    CD3   TRUE
 
-#Calculate multiple comparisons using wicox test with Bonferroni Correction
-comparisons_df <- compare_means(
-  Frequency ~ Disease,
-  data = positive_df,
-  group.by = c("Marker"),
-  ref.group = "CCE",
-  method = "wilcox.test",
-  p.adjust.method = "bonferroni"
-)
+#FDR p-value adjustment on combined results
+bb_results <- bind_rows(bb_comparisons)
+bb_results$p.adj <- p.adjust(bb_results$p.value, method = "BH")
+bb_results <- bb_results %>%
+  mutate(
+    p.signif = case_when(
+      p.adj < 0.0001 ~ "****",
+      p.adj < 0.001  ~ "***",
+      p.adj < 0.01   ~ "**",
+      p.adj < 0.05   ~ "*",
+      TRUE           ~ "ns"))
 
+#Patient level summaries for plot
+patient_means <- positive_df %>%
+  group_by(Patient,Disease,Marker) %>%
+  summarise(Frequency = sum(Positive) / sum(Total_Cells), .groups = "drop")
 
-#Set y coordinate for p.values
-comparisons_df$y.position <- 0.37
-comparisons_df$y.position[seq(1, nrow(comparisons_df), by = 2)] <- 0.40
+#Set disease labels and p.adj y axis positions
+comparisons_plot <- bb_results %>% 
+  mutate(group1 = "CCE",
+         group2 = case_when(contrast == "CCE vs LN"       ~ "LN",
+                            contrast == "CCE vs Diabetes" ~ "Diabetes"),
+         y.position = case_when(contrast == "CCE vs LN"       ~ 0.21,
+                                contrast == "CCE vs Diabetes" ~ 0.23))
+# CD68 position p-adj value position
+comparisons_plot$y.position[comparisons_plot$Marker == "CD68"] <- c(0.38,0.40)
+# C5aR1 position p-adj value position
+comparisons_plot$y.position[comparisons_plot$Marker == "C5aR1"] <- c(0.25,0.29)
 
-#Plot Comparisons across disease (FIGURE 4A)
-ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Marker)) +
-  geom_jitter(size = 0.5, width = 0.2, alpha = 0.5) +
+# Force marker order in all plotting data frames
+positive_df$Marker <- factor(positive_df$Marker,levels = marker_order)
+patient_means$Marker <- factor(patient_means$Marker,levels = marker_order)
+comparisons_plot$Marker <- factor(comparisons_plot$Marker,levels = marker_order)
+
+#Make Figure 4A
+p_4A <- ggplot(positive_df, aes(x = Disease, y = Frequency, fill = Marker)) +
+  
+  # Artery-level plots
   geom_violin(width = 0.7, alpha = 0.3) +
-  geom_boxplot(width = 0.5, outlier.size = 0.2, alpha = 0.7) +
-  stat_pvalue_manual(
-    comparisons_df,
-    label = "p.signif",
-    tip.length = 0.01,
-    bracket.size = 0.5,
-    hide.ns = F) +
-  facet_grid( ~ Marker, switch = "y") +
-  scale_y_continuous(labels = percent_format(),
-                     limits = c(0, 0.2)) +
-  scale_fill_manual(values = c("C5aR1" = "lightblue","CD11b" ="green","MPO" = "magenta",
-                               "CD20" = "orange", "CD3" = "red", "CD68" = "violet")) +
+  geom_boxplot(width = 0.5, outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(size = 0.5, width = 0.2, alpha = 0.3) +
+  
+  # Patient-level plot
+  geom_point(data = patient_means, aes(x = Disease, y = Frequency),
+             inherit.aes = FALSE,
+             position = position_jitter(width = 0.08, height = 0),
+             shape = 21, size = 2.2, stroke = 0.7, fill = "white") +
+  
+  # Beta-binomial GLMM-derived adjusted P values
+  stat_pvalue_manual(comparisons_plot,
+                     label = "p.signif",
+                     xmin = "group1", xmax = "group2",
+                     y.position = "y.position",
+                     tip.length = 0.01, bracket.size = 0.5, hide.ns = TRUE) +
+  #Facet by Marker
+  facet_grid(~ Marker, switch = "y") +
+  
+  #Adjust y axis
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(-0.01,0.40),
+                     breaks = seq(0,0.40,by = 0.05)) +
+  
+  #Set colors
+  scale_fill_manual(values = c("C5aR1" = "lightblue",
+                               "CD11b" = "green",
+                               "MPO"   = "magenta",
+                               "CD20"  = "orange",
+                               "CD3"   = "red",
+                               "CD68"  = "violet")) +
+  
+  #Set overall theme, add plot title and adjust x and y axis labels 
   theme_classic() +
-  labs(
-    title = "Immune Infiltrate in Arteries across Diseases",
-    x = "Disease Group",
-    y = "Cell Frequency (%)",
-    fill = "Marker"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    title = element_text(face = "bold"),
-    plot.title = element_text(hjust = 0.5, face = "bold")
-  ) + NoLegend()
+  labs(title = "Immune Infiltrate in Arteries across Diseases",
+       x = "Disease Group",
+       y = "Marker+ Immune Cells (% of Arterial Cells)",
+       fill = "Marker") +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        title = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+p_4A
 
 
 ####4. FIGURE 4C####
@@ -200,65 +291,25 @@ ggplot(plot_df, aes(x = Marker1, y = Marker2)) +
 
 sessionInfo()
 
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
+# R version 4.6.1 (2026-06-24)
+# Platform: x86_64-pc-linux-gnu
+# Running under: Ubuntu 24.04.4 LTS
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8       
-# [4] LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-# [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+# [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    
+# [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
+# [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
 # 
 # attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods   base     
+# [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] scales_1.4.0       ggpubr_0.6.0       ggplot2_3.5.2      tidyr_1.3.1       
-# [5] dplyr_1.1.4        Seurat_5.3.0       SeuratObject_5.1.0 sp_2.2-0          
-# [9] rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] deldir_1.0-9           pbapply_1.7-2          gridExtra_2.3         
-# [4] rlang_1.1.6            magrittr_2.0.3         RcppAnnoy_0.0.22      
-# [7] matrixStats_1.5.0      ggridges_0.5.4         compiler_4.3.2        
-# [10] spatstat.geom_3.4-1    png_0.1-8              vctrs_0.6.5           
-# [13] reshape2_1.4.4         stringr_1.5.1          pkgconfig_2.0.3       
-# [16] fastmap_1.2.0          backports_1.5.0        labeling_0.4.3        
-# [19] utf8_1.2.6             promises_1.3.3         purrr_1.0.4           
-# [22] jsonlite_2.0.0         goftest_1.2-3          later_1.4.2           
-# [25] spatstat.utils_3.1-4   broom_1.0.8            irlba_2.3.5.1         
-# [28] parallel_4.3.2         cluster_2.1.6          R6_2.6.1              
-# [31] ica_1.0-3              stringi_1.8.7          RColorBrewer_1.1-3    
-# [34] spatstat.data_3.1-6    reticulate_1.42.0      car_3.1-3             
-# [37] parallelly_1.45.0      spatstat.univar_3.1-3  lmtest_0.9-40         
-# [40] scattermore_1.2        Rcpp_1.0.14            tensor_1.5            
-# [43] future.apply_1.11.0    zoo_1.8-12             sctransform_0.4.2     
-# [46] httpuv_1.6.16          Matrix_1.6-5           splines_4.3.2         
-# [49] igraph_2.1.4           tidyselect_1.2.1       dichromat_2.0-0.1     
-# [52] abind_1.4-8            codetools_0.2-19       spatstat.random_3.4-1 
-# [55] miniUI_0.1.1.1         spatstat.explore_3.4-3 listenv_0.9.0         
-# [58] lattice_0.22-7         tibble_3.2.1           plyr_1.8.9            
-# [61] withr_3.0.2            shiny_1.10.0           ROCR_1.0-11           
-# [64] Rtsne_0.17             future_1.58.0          fastDummies_1.7.5     
-# [67] survival_3.8-3         polyclip_1.10-7        fitdistrplus_1.1-11   
-# [70] pillar_1.10.2          carData_3.0-5          KernSmooth_2.23-26    
-# [73] plotly_4.10.4          generics_0.1.3         RcppHNSW_0.6.0        
-# [76] globals_0.18.0         xtable_1.8-4           glue_1.8.0            
-# [79] lazyeval_0.2.2         tools_4.3.2            data.table_1.17.4     
-# [82] RSpectra_0.16-1        ggsignif_0.6.4         RANN_2.6.1            
-# [85] dotCall64_1.2          cowplot_1.1.3          grid_4.3.2            
-# [88] nlme_3.1-168           patchwork_1.3.0        Formula_1.2-5         
-# [91] cli_3.6.5              spatstat.sparse_3.1-0  spam_2.11-1           
-# [94] viridisLite_0.4.2      uwot_0.2.3             gtable_0.3.6          
-# [97] rstatix_0.7.2          digest_0.6.37          progressr_0.15.1      
-# [100] ggrepel_0.9.6          htmlwidgets_1.6.4      farver_2.1.2          
-# [103] htmltools_0.5.8.1      lifecycle_1.0.4        httr_1.4.7            
-# [106] mime_0.13              MASS_7.3-60         
+# [1] glmmTMB_1.1.14     scales_1.4.0       ggpubr_1.0.0       ggplot2_4.0.3      dplyr_1.2.1        Seurat_5.5.1      
+# [7] SeuratObject_5.4.0 sp_2.2-3           tidyr_1.3.2  rstudioapi_0.17.1 

@@ -6,6 +6,7 @@ library(tidyr)
 library(ggpubr)
 library(ggplot2)
 library(scales)
+library(glmmTMB)
 
 ####2. LOAD GLOMERULI DATA####
 
@@ -14,67 +15,214 @@ Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
                              "/Only glomeruli/Processed_Glomeruli_v2.rds"))
 
 
-####3. FIGURE S12A####
+#### 3. PREPARE DATA FOR BETA BINOMIAL MIXED EFFECTS MODELS & PLOT ####
 
-#Extract data from Seurat object
-cluster_counts <-  data.frame("Cells" = Idents(Seurat.obj),
-                              "Glomeruli" = Seurat.obj$Glomeruli,
-                              "Disease" = Seurat.obj$Disease,
-                              "Patient" = Seurat.obj$slide
+#Extract counts
+cluster_counts <- data.frame(
+  Cells = Idents(Seurat.obj),
+  Glomeruli = Seurat.obj$Glomeruli,
+  Patient   = Seurat.obj$slide,
+  Disease   = Seurat.obj$Disease,
+  CD68      = Seurat.obj$CD68.Pos,
+  CD3       = Seurat.obj$CD3.Pos,
+  CD20      = Seurat.obj$CD20.Pos,
+  MPO       = Seurat.obj$MPO.Pos
 )
 
-#Calculate immune cell frequency per glomeruli in each slide
-Immune_freq <- cluster_counts %>%
-  group_by(Disease, Glomeruli, Cells, Patient) %>% 
-  summarise(Cell_Count = n(),
-            .groups = "drop") %>% 
-  group_by(Disease, Glomeruli, Patient) %>% 
-  mutate(Frequency = Cell_Count / sum(Cell_Count),
-         .groups = "drop") %>% 
-  filter(Cells == "Immune")
+#Define marker-positive immune cells
+cluster_counts <- cluster_counts %>%
+  mutate(
+    CD68 = ifelse(Cells == "Immune" & CD68 == "1", 1, 0),
+    CD3 = ifelse(Cells == "Immune" & CD3 == "1", 1, 0),
+    CD20 = ifelse(Cells == "Immune" & CD20 == "1", 1, 0),
+    MPO = ifelse(Cells == "Immune" & MPO == "1", 1, 0))
 
-#Set disease order for plot aesthetics
-Immune_freq$Disease <- factor(Immune_freq$Disease, levels = c("LN","Diabetes","CCE"))
+#Convert to long format (one row per marker)
+cell_long <- cluster_counts %>%
+  pivot_longer(cols = c(CD68, CD3, CD20, MPO),
+               names_to = "Marker",
+               values_to = "Marker_Status")
 
-#Check by Kruskal Wallis if all markers' variability is explained by Disease
-compare_means(
-  Frequency ~ Disease,
-  data = Immune_freq,
-  method = "kruskal.test")
-#   # A tibble: 1 × 6
-#      .y.             p          p.adj   p.format p.signif     method        
-#     <chr>          <dbl>        <dbl>     <chr>   <chr>        <chr>         
-#   1 Frequency 0.00000000457 0.0000000046 4.6e-09  ****     Kruskal-Wallis
+#Calculate number of positive and negative marker immune cells per glomeruli
+positive_df <- cell_long %>%
+  group_by(Disease, Patient, Glomeruli, Marker) %>%
+  summarise(Positive = sum(Marker_Status, na.rm = TRUE), # Number of marker-positive cells
+            Total_Cells = n(), # Total number of cells in glomeruli
+            .groups = "drop") %>%
+  mutate(Negative = Total_Cells - Positive, # Number of marker-negative cells in glomeruli
+         Frequency = Positive / Total_Cells) # Proportion of positive immune cells in glomeruli for visualization
 
-#Plot FIGURE S12A
-ggplot(Immune_freq, aes(x = Disease, y = Frequency, fill = Disease)) +
-  geom_jitter(size = 0.4) + geom_violin(width = 0.7) + 
-  geom_boxplot(width = 0.5,outlier.size = 0.2,alpha = 0.7) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values =c("LN" = "red","Diabetes" ="green","CCE" = "magenta")) +
+#Set LN as the reference disease
+positive_df$Disease <- factor(positive_df$Disease,
+                              levels = c("LN","Diabetes","CCE"))
+#Set immune marker order
+marker_order <- c("CD68","MPO","CD3","CD20")
+positive_df$Marker <- factor(positive_df$Marker,levels = marker_order)
+
+#Make sure that patient of origin is a factor
+positive_df$Patient <- factor(positive_df$Patient)
+
+
+#### 4. FIT BETA-BINOMIAL MIXED-EFFECTS MODELS ####
+
+bb_models <- list()
+bb_comparisons <- list()
+
+for (marker in levels(positive_df$Marker)) {
+  
+  # Load data for current marker
+  tmp <- positive_df %>%
+    filter(Marker == marker,
+           !is.na(Positive),
+           !is.na(Negative),
+           !is.na(Disease),
+           !is.na(Patient)) %>%
+    droplevels()
+  
+  #Fit Beta Binomial using counts
+  fit <- glmmTMB(
+    cbind(Positive, Negative) ~ Disease + (1 | Patient),
+    family = betabinomial(link = "logit"),
+    data = tmp)
+  # Outcome: marker-positive immune cells | all remaining cells in glomeruli
+  # Covariates: 
+  #  1) Disease -> LN as reference for pre-specified comparisons
+  #  2) (1 | Patient) -> Patient included as a random effect with random intercept
+  
+  # Save model for convergence checks
+  bb_models[[marker]] <- fit
+  
+  # Extract coefficient P values
+  comp_df <- data.frame(contrast = c("LN vs Diabetes", "LN vs CCE"),
+                        Marker = marker,
+                        p.value = summary(fit)$coefficients$cond[c("DiseaseDiabetes","DiseaseCCE"),"Pr(>|z|)"])
+  
+  # Store coefficient contrast results
+  bb_comparisons[[marker]] <- comp_df
+  
+}
+
+#Check models' convergences
+print(data.frame(Model = names(bb_models),
+                 pdHess = sapply(bb_models,
+                                 function(x) x$sdr$pdHess),
+                 row.names = NULL))
+#   Model pdHess
+#    CD68   TRUE
+#     CD3   TRUE
+#    CD20   TRUE
+#     MPO   TRUE
+
+# Combine contrast results per marker
+bb_results <- bind_rows(bb_comparisons)
+
+#Adjust p values by BH method
+bb_results$p.adj <- p.adjust(bb_results$p.value, method = "BH")
+
+#Adjust significance labels to be displayed on top of the plot
+bb_results <- bb_results %>% 
+  mutate(p.signif = case_when(p.adj < 0.0001 ~ "****",
+                              p.adj < 0.001  ~ "***",
+                              p.adj < 0.01   ~ "**",
+                              p.adj < 0.05   ~ "*",
+                              TRUE           ~ "ns"))
+
+
+#### 5. PREPARE PATIENT-LEVEL SUMMARIES FOR VISUALIZATION ####
+
+patient_means <- positive_df %>%
+  group_by(Patient, Disease, Marker) %>%
+  summarise(
+    Positive = sum(Positive),
+    Total_Cells = sum(Total_Cells),
+    Frequency = Positive / Total_Cells,
+    n_glomeruli = n(),
+    .groups = "drop")
+
+
+#Set factor order accros patient level dataframes
+patient_means$Disease <- factor(patient_means$Disease,
+                                levels = c("LN", "Diabetes","CCE"))
+patient_means$Marker <- factor(patient_means$Marker, levels = marker_order)
+
+
+#### 6. PLOT FIGURE S12A ####
+
+# Prepare p value positions for plot
+marker_max <- positive_df %>%
+  group_by(Marker) %>%
+  summarise(max_frequency = max(Frequency, na.rm = TRUE),
+            .groups = "drop")
+comparisons_plot <- bb_results %>%
+  left_join(marker_max, by = "Marker") %>%
+  mutate(group1 = "LN",
+         group2 = case_when(contrast == "LN vs Diabetes" ~ "Diabetes",
+                            contrast == "LN vs CCE" ~ "CCE"),
+         
+         y.position = case_when(contrast == "LN vs Diabetes" ~ max_frequency * 1.10,
+                                contrast == "LN vs CCE" ~ max_frequency * 1.20))
+
+#Force marker order
+positive_df$Marker <- factor(positive_df$Marker, levels = marker_order)
+patient_means$Marker <- factor(patient_means$Marker, levels = marker_order)
+comparisons_plot$Marker <- factor(comparisons_plot$Marker, levels = marker_order)
+
+
+#Make plot 
+p_immune_markers <- ggplot(positive_df,
+                           aes(x = Disease, y = Frequency, fill = Marker)) +
+  
+  # Individual glomeruli plots
+  geom_violin(width = 0.7, alpha = 0.3, trim = T) +
+  geom_boxplot(width = 0.5, outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(size = 0.5, width = 0.2, alpha = 0.3) +
+  
+  # Patient-level plots
+  geom_point(data = patient_means,
+             aes(x = Disease, y = Frequency),
+             inherit.aes = FALSE,
+             position = position_jitter(width = 0.08, height = 0, seed = 123),
+             shape = 21, size = 2.2, stroke = 0.7, fill = "white") +
+  
+  
+  # Add Beta-binomial GLMM adjusted P values
+  stat_pvalue_manual(comparisons_plot,
+                     label = "p.signif",
+                     xmin = "group1", xmax = "group2",
+                     y.position = "y.position",
+                     tip.length = 0.01, bracket.size = 0.5, hide.ns = TRUE) +
+  
+  # Facet by immune marker
+  facet_wrap(~ Marker, ncol = 2, scales = "free_y") +
+  
+  # Y axis
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0.02,0.25))) +
+  
+  # Marker colours
+  scale_fill_manual(values = c("CD68" = "violet",
+                               "CD3"  = "red",
+                               "CD20" = "orange",
+                               "MPO"  = "magenta")) +
+  
+  # Labels
+  labs(title = "Immune Cell Populations in Glomeruli across Diseases",
+       x = "Disease Group",
+       y = "Marker-Positive Immune Cells (% of Glomerular Cells)",
+       fill = "Marker") +
+  
+  # Theme
   theme_classic() +
-  labs(
-    title = "Immune Cell Frequency per Glomeruli",
-    x = "Disease Group",
-    y = "Cell Frequency (%)",
-    fill = "Disease"
-  ) +
-  stat_compare_means(
-    method = "wilcox.test",
-    comparisons = list(c("LN", "Diabetes"), c("LN", "CCE")),
-    p.adjust.method = "bonferroni",
-    label = "p.signif",
-    tip.length = 0.01,
-    bracket.size = 0.5,
-    hide.ns = TRUE
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1),
         title = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5,face = "bold"),
-        legend.position = "none")
+        plot.title = element_text(hjust = 0.5,face = "bold"))
 
 
-####4. FIGURE S12C####
+p_immune_markers
+
+
+####7. FIGURE S12C####
 
 DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
         features = c("CD68.Pos", "CD163.Pos", "CD11b.Pos", "C5aR1.Pos",
@@ -92,7 +240,7 @@ DotPlot(Seurat.obj[, Idents(Seurat.obj) == "Immune"],
   ) #FIGURE S12C
 
 
-####5. FIGURE S12D####
+####8. FIGURE S12D####
 
 #Obtain Lupus Immune cell data
 Lupus.Imm <- Seurat.obj[ , Seurat.obj$Disease == "LN" & 
@@ -166,59 +314,29 @@ ggplot(plot_df, aes(x = Marker1, y = Marker2)) +
   )#FIGURE S12D
 
 
-####6. Session Information#####
+####9. Session Information#####
 
 sessionInfo()
 
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
+# R version 4.6.1 (2026-06-24)
+# Platform: x86_64-pc-linux-gnu
+# Running under: Ubuntu 24.04.4 LTS
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8       
-# [4] LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-# [10] LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+# [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
+# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
 # 
+
 # attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods   base     
+# [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] scales_1.4.0       ggpubr_0.6.0       ggplot2_3.5.2      tidyr_1.3.1        dplyr_1.1.4       
-# [6] Seurat_5.3.0       SeuratObject_5.1.0 sp_2.2-0           rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] deldir_1.0-9           pbapply_1.7-2          gridExtra_2.3          rlang_1.1.6           
-# [5] magrittr_2.0.3         RcppAnnoy_0.0.22       matrixStats_1.5.0      ggridges_0.5.4        
-# [9] compiler_4.3.2         spatstat.geom_3.4-1    png_0.1-8              vctrs_0.6.5           
-# [13] reshape2_1.4.4         stringr_1.5.1          pkgconfig_2.0.3        fastmap_1.2.0         
-# [17] backports_1.5.0        labeling_0.4.3         utf8_1.2.6             promises_1.3.3        
-# [21] purrr_1.0.4            jsonlite_2.0.0         goftest_1.2-3          later_1.4.2           
-# [25] spatstat.utils_3.1-4   broom_1.0.8            irlba_2.3.5.1          parallel_4.3.2        
-# [29] cluster_2.1.6          R6_2.6.1               ica_1.0-3              stringi_1.8.7         
-# [33] RColorBrewer_1.1-3     spatstat.data_3.1-6    reticulate_1.42.0      car_3.1-3             
-# [37] parallelly_1.45.0      spatstat.univar_3.1-3  lmtest_0.9-40          scattermore_1.2       
-# [41] Rcpp_1.0.14            tensor_1.5             future.apply_1.11.0    zoo_1.8-12            
-# [45] sctransform_0.4.2      httpuv_1.6.16          Matrix_1.6-5           splines_4.3.2         
-# [49] igraph_2.1.4           tidyselect_1.2.1       dichromat_2.0-0.1      abind_1.4-8           
-# [53] codetools_0.2-19       spatstat.random_3.4-1  miniUI_0.1.1.1         spatstat.explore_3.4-3
-# [57] listenv_0.9.0          lattice_0.22-7         tibble_3.2.1           plyr_1.8.9            
-# [61] withr_3.0.2            shiny_1.10.0           ROCR_1.0-11            Rtsne_0.17            
-# [65] future_1.58.0          fastDummies_1.7.5      survival_3.8-3         polyclip_1.10-7       
-# [69] fitdistrplus_1.1-11    pillar_1.10.2          carData_3.0-5          KernSmooth_2.23-26    
-# [73] plotly_4.10.4          generics_0.1.3         RcppHNSW_0.6.0         globals_0.18.0        
-# [77] xtable_1.8-4           glue_1.8.0             lazyeval_0.2.2         tools_4.3.2           
-# [81] data.table_1.17.4      RSpectra_0.16-1        ggsignif_0.6.4         RANN_2.6.1            
-# [85] dotCall64_1.2          cowplot_1.1.3          grid_4.3.2             nlme_3.1-168          
-# [89] patchwork_1.3.0        Formula_1.2-5          cli_3.6.5              spatstat.sparse_3.1-0 
-# [93] spam_2.11-1            viridisLite_0.4.2      uwot_0.2.3             gtable_0.3.6          
-# [97] rstatix_0.7.2          digest_0.6.37          progressr_0.15.1       ggrepel_0.9.6         
-# [101] htmlwidgets_1.6.4      farver_2.1.2           htmltools_0.5.8.1      lifecycle_1.0.4       
-# [105] httr_1.4.7             mime_0.13              MASS_7.3-60  
+# [1] glmmTMB_1.1.14     scales_1.4.0       ggpubr_1.0.0       ggplot2_4.0.3      dplyr_1.2.1        Seurat_5.5.1       SeuratObject_5.4.0 sp_2.2-3          
+# [9] tidyr_1.3.2  SeuratObject_5.1.0 sp_2.2-0           rstudioapi_0.17.1 
