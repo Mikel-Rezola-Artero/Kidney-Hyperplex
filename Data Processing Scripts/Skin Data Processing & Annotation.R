@@ -9,7 +9,7 @@ library(Seurat)
 
 #Set directory to script location & obtain file name
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "Data/", pattern = "Skin", full.names = TRUE)
+files <- list.files(path = "../Data/", pattern = "Skin", full.names = TRUE)
 
 #Create list to store the data
 Skin_IF <- list()
@@ -267,7 +267,7 @@ Seurat_mxnorm <- RenameIdents(Seurat_mxnorm,
 
 #Store Processed Seurat Object with labels
 saveRDS(Seurat_mxnorm, file = paste0(dirname(rstudioapi::getActiveDocumentContext()$path),
-                                     "/Only skin/Processed_Skin.rds"))
+                                     "../Data2/Processed_Skin.rds"))
 
 # If curious plot clusters as 3D
 # Seurat_mxnorm$clusters <- Idents(Seurat_mxnorm)

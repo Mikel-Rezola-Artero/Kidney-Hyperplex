@@ -686,7 +686,7 @@ Seurat_mxnorm <- RenameIdents(Seurat_mxnorm,
                               new_cluster_names)
 
 #Store Processed Seurat Object with labels
-saveRDS(Seurat_mxnorm, file = "../Data/Processed_Glomeruli_v2.rds")
+saveRDS(Seurat_mxnorm, file = "../Data2/Processed_Glomeruli_v2.rds")
 
 
 # If curious plot clusters as 3D

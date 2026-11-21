@@ -9,7 +9,7 @@ library(Seurat)
 
 #Set directory to script location & obtain file name
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "../Data_Skin", pattern = "skin", full.names = TRUE)
+files <- list.files(path = "../Data2", pattern = "skin", full.names = TRUE)
 
 #Create list to store the data
 Skin_IF <- list()

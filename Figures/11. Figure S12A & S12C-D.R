@@ -11,8 +11,8 @@ library(glmmTMB)
 ####2. LOAD GLOMERULI DATA####
 
 #Load Processed data
-Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only glomeruli/Processed_Glomeruli_v2.rds"))
+setwd(dirname(getActiveDocumentContext()$path))
+Seurat.obj <- readRDS("../Data2/Processed_Glomeruli_v2.rds")
 
 
 #### 3. PREPARE DATA FOR BETA BINOMIAL MIXED EFFECTS MODELS & PLOT ####

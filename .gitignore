@@ -1,0 +1,20 @@
+# Data processing outputs
+/Data Processing Scripts/Outputs/
+
+# Raw and processed datasets
+/Data/
+/Data2/
+
+# Clinical datasets
+/Figures/LN_Bulgarie_DBfinal.xlsx
+/Figures/LN_Bulgarie_DBfinal20250527.xlsx
+
+# External datasets
+/Figures/Liver single nuclei/
+/Figures/PBMC_Avacopan_Patient/
+
+# RStudio temporary files
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/

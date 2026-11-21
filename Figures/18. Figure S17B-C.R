@@ -10,7 +10,7 @@ library(scales)
 setwd(dirname(getActiveDocumentContext()$path))
 
 #Load Processed data
-Seurat.obj <- readRDS("Only skin/Processed_Skin.rds")
+Seurat.obj <- readRDS("../Data2/Processed_Skin.rds")
 
 
 ####3. FIGURE S17B####

@@ -15,8 +15,8 @@ library(glmmTMB)
 ####2. LOAD ARTERY DATA####
 
 #Load Processed data
-Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only arteries/Processed_Artery_v2.rds"))
+setwd(dirname(getActiveDocumentContext()$path))
+Seurat.obj <- readRDS("../Data2/Processed_Artery_v2.rds")
 
 
 ####3. FIGURE 3H####

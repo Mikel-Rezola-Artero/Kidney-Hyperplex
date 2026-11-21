@@ -9,7 +9,7 @@ library(ggplot2)
 setwd(dirname(getActiveDocumentContext()$path))
 
 #Load Processed Data
-Seurat.obj <- readRDS("Data/Processed_Tonsils.rds")
+Seurat.obj <- readRDS("../Data/Processed_Tonsils.rds")
 
 #Load original data files with coordinate information
 files <- list.files(path = "Data/",#Access folder with data

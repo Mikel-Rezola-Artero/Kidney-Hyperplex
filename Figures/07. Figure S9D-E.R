@@ -8,10 +8,9 @@ library(Seurat)
 
 #Set data location & select file with RPKMs
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "Data/", full.names = TRUE)
 
 #Load the glomeruli dataset as dataframe
-Glomeruli <- read.csv(file=files,sep="\t")
+Glomeruli <- read.csv(file="../Data2/GSE160048_human_glom_single_cell_rpkms.txt",sep="\t")
 
 #Smart-seq2 single-cell RNA-seq data obtained from microdissected Glomeruli
 #obtained from GSE160048, data consists on RPKMs from quality filtered cells

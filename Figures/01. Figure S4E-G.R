@@ -7,8 +7,9 @@ library(scales)
 ####2. LOAD PROCESSED TONSIL DATA####
 
 #Load Processed data
-Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Data/Processed_Tonsils.rds"))
+setwd(dirname(getActiveDocumentContext()$path))
+Seurat.obj <- readRDS("../Data/Processed_Tonsils.rds")
+
 
 ####3. FIGURE S4E ####
 

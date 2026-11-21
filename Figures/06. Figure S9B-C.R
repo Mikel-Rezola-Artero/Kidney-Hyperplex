@@ -6,9 +6,11 @@ library(scales)
 
 ####2. LOAD GLOMERULI DATA####
 
-#Load Processed data
-Seurat.obj <- readRDS(paste0(dirname(getActiveDocumentContext()$path),
-                             "/Only glomeruli/Processed_Glomeruli_v2.rds"))
+#Set directory
+setwd(dirname(getActiveDocumentContext()$path))
+
+#Load Processed Data
+Seurat.obj <- readRDS("../Data2/Processed_Glomeruli_v2.rds")
 
 
 ####3. FIGURE S9B####

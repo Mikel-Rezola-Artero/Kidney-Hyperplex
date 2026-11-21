@@ -12,10 +12,10 @@ library(ggplot2)
 setwd(dirname(getActiveDocumentContext()$path))
 
 #Load Processed data
-Seurat.obj <- readRDS("Only skin/Processed_Skin.rds")
+Seurat.obj <- readRDS("../Data2/Processed_Skin.rds")
 
 #Load data file with artery annotation data
-Skin <- read_xlsx("Data/CCE_Skin_Arteries.xlsx")
+Skin <- read_xlsx("../Data2/CCE_Skin_Arteries.xlsx")
 
 #Add name-corrected artery annotation data to Seurat object
 Skin$`Analysis Region` <- factor(Skin$`Analysis Region`)

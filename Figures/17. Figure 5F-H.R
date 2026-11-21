@@ -11,10 +11,10 @@ library(ggbreak)
 setwd(dirname(getActiveDocumentContext()$path))
 
 #Load Processed data
-Seurat.obj <- readRDS("Only skin/Processed_Skin.rds")
+Seurat.obj <- readRDS("../Data2/Processed_Skin.rds")
 
 #Load original data file with coordinate data
-Skin <- read_xlsx("Data/CCE_Skin_Arteries.xlsx")
+Skin <- read_xlsx("../Data2/CCE_Skin_Arteries.xlsx")
 
 
 ####3. FIGURE 5F####

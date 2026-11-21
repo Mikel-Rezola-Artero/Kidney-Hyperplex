@@ -12,7 +12,7 @@ library(Seurat)
 
 #Set directory to script location & obtain files names
 setwd(dirname(getActiveDocumentContext()$path))
-files <- list.files(path = "Data/",#Access folder with data
+files <- list.files(path = "../Data/",#Access folder with data
                     pattern = "Tonsil[1-4]-Square.*\\.csv$",#Select relevant files 
                     full.names = TRUE)#Take the names of the files for analysis
 
@@ -393,7 +393,7 @@ Seurat_mxnorm <- RenameIdents(Seurat_mxnorm,
 
 #Store Processed Seurat Object with labels
 saveRDS(Seurat_mxnorm, file = paste0(dirname(getActiveDocumentContext()$path),
-                                     "/Data/Processed_Tonsils.rds"))
+                                     "../Data/Processed_Tonsils.rds"))
 
 ####10. Session Information#####
 
