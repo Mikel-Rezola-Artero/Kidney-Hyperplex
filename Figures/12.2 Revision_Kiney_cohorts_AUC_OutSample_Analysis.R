@@ -140,7 +140,7 @@ print(results)
 ####3. Use Exploration Cohort Logistic Regression Fit on Validation Cohort####
 
 #Load data from script directory
-data2 <- read_xlsx("Matrice_C9C5aR_ROC_validation.xlsx")
+data2 <- read_xlsx("../Data2/Matrice_C9C5aR_ROC_validation.xlsx")
 
 #Rename columns
 colnames(data2) <- c("Patients",

@@ -8,6 +8,7 @@ library(ggplot2)
 library(pROC)
 library(RColorBrewer)
 library(ggrepel)
+library(patchwork)
 
 ####2. IMPORT & CLEAN DATA####
 
@@ -489,74 +490,25 @@ print(results)#Confirmation that only C5b-9 Capillary, Mesangial and Total + C5a
 
 sessionInfo()
 
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
+# R version 4.6.1 (2026-06-24)
+# Platform: x86_64-pc-linux-gnu
+# Running under: Ubuntu 24.04.4 LTS
 # 
 # Matrix products: default
 # BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
 # 
 # locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    
-# [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
-# [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
-# 
-# time zone: Europe/Paris
-# tzcode source: system (glibc)
-# 
-# attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods   base     
-# 
-# other attached packages:
-#   [1] ggrepel_0.9.6      RColorBrewer_1.1-3 pROC_1.18.5        ggpubr_0.6.0       ggplot2_3.5.2     
-# [6] tidyr_1.3.1        dplyr_1.1.4        readxl_1.4.5       rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] gtable_0.3.6      compiler_4.3.2    ggsignif_0.6.4    Rcpp_1.0.14       tidyselect_1.2.1  dichromat_2.0-0.1
-# [7] scales_1.4.0      R6_2.6.1          plyr_1.8.9        labeling_0.4.3    generics_0.1.3    Formula_1.2-5    
-# [13] backports_1.5.0   tibble_3.2.1      car_3.1-3         pillar_1.10.2     rlang_1.1.6       broom_1.0.8      
-# [19] cli_3.6.5         withr_3.0.2       magrittr_2.0.3    grid_4.3.2        lifecycle_1.0.4   vctrs_0.6.5      
-# [25] rstatix_0.7.2     glue_1.8.0        farver_2.1.2      cellranger_1.1.0  abind_1.4-8       carData_3.0-5    
-# [31] purrr_1.0.4       tools_4.3.2       pkgconfig_2.0.3  
-# > sessionInfo()
-# R version 4.3.2 (2023-10-31)
-# Platform: x86_64-pc-linux-gnu (64-bit)
-# Running under: Ubuntu 20.04.6 LTS
-# 
-# Matrix products: default
-# BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3;  LAPACK version 3.9.0
-# 
-# locale:
-#   [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C              
-# [3] LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    
-# [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
-# [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
-# [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+# [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8   
+# [6] LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C            
 # [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 # 
 # time zone: Europe/Paris
 # tzcode source: system (glibc)
 # 
 # attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods  
-# [7] base     
+# [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] ggrepel_0.9.6      RColorBrewer_1.1-3 pROC_1.18.5       
-# [4] ggpubr_0.6.0       ggplot2_3.5.2      tidyr_1.3.1       
-# [7] dplyr_1.1.4        readxl_1.4.5       rstudioapi_0.17.1 
-# 
-# loaded via a namespace (and not attached):
-#   [1] gtable_0.3.6      compiler_4.3.2    ggsignif_0.6.4   
-# [4] Rcpp_1.0.14       tidyselect_1.2.1  dichromat_2.0-0.1
-# [7] scales_1.4.0      R6_2.6.1          plyr_1.8.9       
-# [10] labeling_0.4.3    generics_0.1.3    Formula_1.2-5    
-# [13] backports_1.5.0   tibble_3.2.1      car_3.1-3        
-# [16] pillar_1.10.2     rlang_1.1.6       broom_1.0.8      
-# [19] cli_3.6.5         withr_3.0.2       magrittr_2.0.3   
-# [22] grid_4.3.2        lifecycle_1.0.4   vctrs_0.6.5      
-# [25] rstatix_0.7.2     glue_1.8.0        farver_2.1.2     
-# [28] cellranger_1.1.0  abind_1.4-8       carData_3.0-5    
-# [31] purrr_1.0.4       tools_4.3.2       pkgconfig_2.0.3 
+# [1] patchwork_1.3.2    ggrepel_0.9.8      RColorBrewer_1.1-3 pROC_1.18.5        ggpubr_1.0.0       ggplot2_4.0.3      tidyr_1.3.2       
+# [8] dplyr_1.2.1        rstudioapi_0.19.0  readxl_1.5.0    
